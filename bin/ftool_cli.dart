@@ -49,20 +49,29 @@ void main(List<String> arguments) async {
 
 void _printHelp() {
   _logger.info('''
-  ███████╗████████╗██████╗  ██████╗ ██╗
-  ██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗██║
-  █████╗     ██║   ██████╔╝██║   ██║██║
-  ██╔══╝     ██║   ██╔══██╗██║   ██║██║
-  ██║        ██║   ██████╔╝╚██████╔╝███████╗
-  ╚═╝        ╚═╝   ╚═════╝  ╚═════╝ ╚══════╝
-  
-  Flutter Architecture & Utility CLI Tool v1.0.0
+┌─────────────────────────────────────────────────────────────┐
+│                                                             │
+│   ███████╗████████╗██████╗  ██████╗  ██╗                    │
+│   ██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗██║                     │
+│   █████╗     ██║   ██║  ██║██║   ██║██║                     │
+│   ██╔══╝     ██║   ██║  ██║██║   ██║██║                     │
+│   ██║        ██║   ╚██████╔╝╚██████╔╝███████╗               │
+│   ╚═╝        ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝               │
+│                                                             │
+│   Flutter Architecture & Utility CLI Tool v1.0.0            │
+│   Developed by : Rafsanul Rifat                             │
+│   GitHub       : https://github.com/rafsanul247/ftool_cli   │
+|                                                             |
+└─────────────────────────────────────────────────────────────┘
 
-  USAGE GUIDE:
-    ftool <FeatureName>        # Interactive prompt for creating Feature Architecture
-    ftool doctor               # Check environment & project structure
-    ftool tree                 # Display workspace tree structure
-    ftool config theme         # Automatically injects Theme, Constants, & Helpers
+┌─────────────────────────────────────────────────────────────┐
+│ COMMAND                      │ DESCRIPTION                  │
+├──────────────────────────────┼──────────────────────────────┤
+│ ftool <FeatureName>          │ Interactive feature scaffold │
+│ ftool doctor                 │ Check workspace environment  │
+│ ftool tree                   │ Visual project directory     │
+│ ftool config theme           │ Inject Theme & Helpers       │
+└──────────────────────────────┴──────────────────────────────┘
   ''');
 }
 
