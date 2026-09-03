@@ -127,6 +127,7 @@ Future<void> _handleInit(String? appName) async {
       await _handleConfig(['config', 'backend']);
       await _handleConfig(['config', 'utils']);
       await _handleConfig(['config', 'main']);
+      _fixWidgetTest(validAppName);
 
       _logger.info('\n👉 Run "cd $validAppName" and start coding!');
     } else {
@@ -304,6 +305,7 @@ Future<void> _handleConfig(List<String> args) async {
     case 'main':
       _createFile(path.join('lib', 'app.dart'), Templates.appDartContent);
       _createFile(path.join('lib', 'main.dart'), Templates.mainDartContent);
+      _fixWidgetTest();
       _logger.success('🚀 Clean main.dart & app.dart created!');
       break;
   }
@@ -387,6 +389,35 @@ void _createFile(String filePath, String content) {
   final file = File(filePath);
   file.parent.createSync(recursive: true);
   file.writeAsStringSync(content);
+}
+
+String _getAppName() {
+  final pubspec = File('pubspec.yaml');
+  if (pubspec.existsSync()) {
+    final lines = pubspec.readAsLinesSync();
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('name:')) {
+        return trimmed.substring(5).replaceAll("'", '').replaceAll('"', '').trim();
+      }
+    }
+  }
+  return '';
+}
+
+void _fixWidgetTest([String? appName]) {
+  final widgetTestFile = File(path.join('test', 'widget_test.dart'));
+  if (!widgetTestFile.existsSync()) return;
+
+  final effectiveAppName = (appName != null && appName.isNotEmpty) ? appName : _getAppName();
+  if (effectiveAppName.isEmpty) return;
+
+  final content = widgetTestFile.readAsStringSync();
+  final updated = content.replaceAll(
+    RegExp(r"""import\s+['"][^'"]*main\.dart['"]\s*;"""),
+    "import 'package:$effectiveAppName/app.dart';",
+  );
+  widgetTestFile.writeAsStringSync(updated);
 }
 
 bool _isValidFlutterAppName(String name) {
