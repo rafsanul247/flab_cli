@@ -120,8 +120,8 @@ Future<void> _handleInit(String? appName) async {
       Directory.current = Directory(validAppName);
 
       // Auto Execution Tasks
-      await _installDependencies();
       _cleanPubspec();
+      await _installDependencies();
       await _handleConfig(['config', 'theme']);
       await _handleConfig(['config', 'assets']);
       await _handleConfig(['config', 'backend']);
@@ -133,8 +133,8 @@ Future<void> _handleInit(String? appName) async {
       _logger.err('Failed to create Flutter project: ${process.stderr}');
     }
   } else {
-    await _installDependencies();
     _cleanPubspec();
+    await _installDependencies();
     await _handleConfig(['config', 'theme']);
     await _handleConfig(['config', 'assets']);
     await _handleConfig(['config', 'backend']);
@@ -146,11 +146,17 @@ Future<void> _handleInit(String? appName) async {
 
 Future<void> _installDependencies() async {
   _logger.info('📦 Installing Dio, Hive, GetIt, GoRouter, Google Fonts...');
-  await Process.run(
+  final process = await Process.run(
     'flutter', 
     ['pub', 'add', 'dio', 'hive', 'hive_flutter', 'get_it', 'go_router', 'google_fonts', 'connectivity_plus', 'injectable', 'pretty_dio_logger', 'flutter_screenutil'], 
     runInShell: true,
+    workingDirectory: Directory.current.path,
   );
+  if (process.exitCode == 0) {
+    _logger.success('✅ Dependencies installed successfully!');
+  } else {
+    _logger.err('Failed to install dependencies: ${process.stderr}');
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -335,21 +341,23 @@ void _cleanAndConfigurePubspec() {
       .where((line) => !line.trim().startsWith('#'))
       .toList();
 
-  // 3. Remove existing 'flutter:' section to avoid duplication
+  // 3. Remove existing root-level 'flutter:' section to avoid duplication
   final filteredLines = <String>[];
   bool inFlutterSection = false;
 
   for (final line in cleanedLines) {
-    if (line.trim().startsWith('flutter:')) {
+    if (line.startsWith('flutter:')) {
       inFlutterSection = true;
       continue;
     }
 
-    // Skip indented properties that belong to the old flutter section
-    if (inFlutterSection && (line.startsWith('  ') || line.trim().isEmpty)) {
-      continue;
-    } else {
-      inFlutterSection = false;
+    // Skip indented properties that belong to the old root flutter section
+    if (inFlutterSection) {
+      if (line.startsWith(' ') || line.startsWith('\t') || line.trim().isEmpty) {
+        continue;
+      } else {
+        inFlutterSection = false;
+      }
     }
 
     filteredLines.add(line);
@@ -370,15 +378,10 @@ void _cleanAndConfigurePubspec() {
   _logger.success('Cleaned pubspec.yaml and configured assets successfully!');
 }
 
-// void _cleanPubspec() {
-//   final file = File('pubspec.yaml');
-//   if (file.existsSync()) {
-//     final lines = file.readAsLinesSync();
-//     final cleaned = lines.where((line) => !line.trim().startsWith('#')).join('\n');
-//     file.writeAsStringSync(cleaned);
-//     _logger.success('Cleaned comments from pubspec.yaml!');
-//   }
-// }
+void _cleanPubspec() {
+  _cleanAndConfigurePubspec();
+}
+
 
 void _createFile(String filePath, String content) {
   final file = File(filePath);
@@ -482,20 +485,20 @@ void _printHelp() {
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 
-┌───────────────────────────────────┬────────────────────────────────────┐
-│  COMMAND                          │  DESCRIPTION                       │
-├───────────────────────────────────┼────────────────────────────────────┤
-│  ⚡ ftool init <appName>         │  # Initialize Flutter project      │
-│  ⚡ ftool <Feature> --clean      │  # Scaffold Clean Architecture     │
-│  ⚡ ftool <Feature> --mvvm       │  # Scaffold MVVM Architecture      │
-│  ⚡ ftool <Feature> -u <UseCase> │  # Inject custom UseCase           │
-│  ⚡ ftool list                   │  # List all created features       │
-│  ⚡ ftool rm <Feature>           │  # Safe remove feature             │
-│  ⚡ ftool rename <Old> <New>     │  # Rename feature folder           │
-│  ⚡ ftool config theme           │  # Inject Themes & Helpers         │
-│  ⚡ ftool config assets          │  # Generate assets directories     │
-│  ⚡ ftool doctor                 │  # Check project health            │
-│  ⚡ ftool tree                   │  # Visual project directory        │
+┌──────────────────────────────────┬────────────────────────────────────┐
+│  COMMAND                         │  DESCRIPTION                       │
+├──────────────────────────────────┼────────────────────────────────────┤
+│  ⚡ ftool init <appName>          │  # Initialize Flutter project      │
+│  ⚡ ftool <Feature> --clean       │  # Scaffold Clean Architecture     │
+│  ⚡ ftool <Feature> --mvvm        │  # Scaffold MVVM Architecture      │
+│  ⚡ ftool <Feature> -u <UseCase>  │  # Inject custom UseCase           │
+│  ⚡ ftool list                    │  # List all created features       │
+│  ⚡ ftool rm <Feature>            │  # Safe remove feature             │
+│  ⚡ ftool rename <Old> <New>      │  # Rename feature folder           │
+│  ⚡ ftool config theme            │  # Inject Themes & Helpers         │
+│  ⚡ ftool config assets           │  # Generate assets directories     │
+│  ⚡ ftool doctor                  │  # Check project health            │
+│  ⚡ ftool tree                    │  # Visual project directory        │
 └──────────────────────────────────┴────────────────────────────────────┘
   ''');
 }

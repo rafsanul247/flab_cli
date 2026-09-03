@@ -4,9 +4,9 @@ class Templates {
   // =========================================================================
 
   static const String textThemeContent = '''
-iimport 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:$appName/core/utils/constants/colors.dart';
+import '../constants/colors.dart';
 
 class UTextTheme {
   // private constructor
@@ -52,8 +52,8 @@ class UTextTheme {
 
   static const String appBarThemeContent = '''
 import 'package:flutter/material.dart';
-import 'package:$appName/core/utils/constants/colors.dart';
-import 'package:$appName/core/utils/constants/sizes.dart';
+import '../../constants/colors.dart';
+import '../../constants/sizes.dart';
 
 
 class UAppBarTheme{
@@ -84,7 +84,7 @@ class UAppBarTheme{
 
   static const String bottomSheetThemeContent = '''
 import 'package:flutter/material.dart';
-import 'package:$appName/core/utils/constants/colors.dart';
+import '../../constants/colors.dart';
 
 
 class UBottomSheetTheme {
@@ -110,8 +110,8 @@ class UBottomSheetTheme {
 
   static const String checkboxThemeContent = '''
 import 'package:flutter/material.dart';
-import 'package:$appName/core/utils/constants/colors.dart';
-import 'package:$appName/core/utils/constants/sizes.dart';
+import '../../constants/colors.dart';
+import '../../constants/sizes.dart';
 
 
 class UCheckboxTheme {
@@ -159,7 +159,7 @@ class UCheckboxTheme {
 
   static const String chipThemeContent = '''
 import 'package:flutter/material.dart';
-import 'package:$appName/core/utils/constants/colors.dart';
+import '../../constants/colors.dart';
 
 class UChipTheme{
 
@@ -187,8 +187,8 @@ class UChipTheme{
 
   static const String elevatedButtonThemeContent = '''
 import 'package:flutter/material.dart';
-import 'package:$appName/core/utils/constants/colors.dart';
-import 'package:$appName/core/utils/constants/sizes.dart';
+import '../../constants/colors.dart';
+import '../../constants/sizes.dart';
 
 class UElevatedButtonTheme {
   UElevatedButtonTheme._();
@@ -247,8 +247,8 @@ class UElevatedButtonTheme {
 
   static const String outlinedButtonThemeContent = '''
 import 'package:flutter/material.dart';
-import 'package:$appName/core/utils/constants/colors.dart';
-import 'package:$appName/core/utils/constants/sizes.dart';
+import '../../constants/colors.dart';
+import '../../constants/sizes.dart';
 
 
 
@@ -304,8 +304,8 @@ class UOutlinedButtonTheme {
 
   static const String textFieldThemeContent = '''
 import 'package:flutter/material.dart';
-import 'package:$appName/core/utils/constants/colors.dart';
-import 'package:$appName/core/utils/constants/sizes.dart';
+import '../../constants/colors.dart';
+import '../../constants/sizes.dart';
 
 class UTextFormFieldTheme {
   UTextFormFieldTheme._();
@@ -581,7 +581,7 @@ class AppTheme {
   // 🧭 ROUTER & HELPERS & EXTENSIONS
   // =========================================================================
 
-  static const String appRouterContent = '''
+  static const String appRouterContent = r'''
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -744,7 +744,7 @@ extension UDeviceExtension on BuildContext {
   // ⚡ BACKEND (DIO / HIVE / DEPENDENCY INJECTION)
   // =========================================================================
 
-  static const String dioClientContent = '''
+  static const String dioClientContent = r'''
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:injectable/injectable.dart';
@@ -1010,7 +1010,7 @@ class StorageService {
   // ========================================================
   //                      Utils
   // ========================================================
-  static const String apiEndpointContent = ''' 
+  static const String apiEndpointContent = r'''
   /// API endpoints configuration
 /// Centralized location for all API endpoints
 class ApiEndpoint {
@@ -1053,7 +1053,7 @@ class ApiEndpoint {
 }
   ''';
 
-  static const String appLoggerContent = '''
+  static const String appLoggerContent = r'''
   import 'package:flutter/foundation.dart';
 
 /// Application logger utility
@@ -1132,7 +1132,7 @@ class AppLogger {
 
   static const String dependencyInjectionContent = '''
 import 'package:get_it/get_it.dart';
-import 'dio_client.dart';
+import 'core/network/dio_client.dart';
 
 final GetIt sl = GetIt.instance;
 
@@ -1150,7 +1150,7 @@ Future<void> initDependencies() async {
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'core/theme/app_theme.dart';
-import 'core/router/app_router.dart';
+import 'core/routers/app_router.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -1167,7 +1167,7 @@ class MyApp extends StatelessWidget {
           // Remove debug banner
           debugShowCheckedModeBanner: false,
           // App title (shows in task switcher)
-          title: '$appName',
+          title: 'App',
 
           theme: AppTheme.lightTheme(context),
 
