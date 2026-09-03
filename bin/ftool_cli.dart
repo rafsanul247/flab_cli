@@ -149,7 +149,7 @@ Future<void> _installDependencies() async {
   _logger.info('📦 Installing Dio, Hive, GetIt, GoRouter, Google Fonts...');
   final process = await Process.run(
     'flutter', 
-    ['pub', 'add', 'dio', 'hive', 'hive_flutter', 'get_it', 'go_router', 'google_fonts', 'connectivity_plus', 'injectable', 'pretty_dio_logger', 'flutter_screenutil'], 
+    ['pub', 'add', 'dio', 'hive', 'hive_flutter', 'get_it', 'go_router', 'google_fonts', 'connectivity_plus', 'pretty_dio_logger', 'flutter_screenutil'], 
     runInShell: true,
     workingDirectory: Directory.current.path,
   );
@@ -475,7 +475,15 @@ void _addFeatureToInjection(String snakeName, String pascalName) {
     }
   }
   if (!content.contains('void _setUpCore()')) {
-    content = '${content.trimRight()}\n\n// Core: সব feature-এর জন্য shared জিনিস\nvoid _setUpCore() {\n  sl.registerLazySingleton<Dio>(() => Dio());\n}\n';
+    final dioClientFile = File(path.join('lib', 'core', 'network', 'dio_client.dart'));
+    if (dioClientFile.existsSync()) {
+      if (!content.contains("core/network/dio_client.dart")) {
+        content = "import 'core/network/dio_client.dart';\n$content";
+      }
+      content = '${content.trimRight()}\n\n// Core: Shared resources for all features\nvoid _setUpCore() {\n  sl.registerLazySingleton<DioClient>(() => DioClient());\n  sl.registerLazySingleton<Dio>(() => sl<DioClient>().dio);\n}\n';
+    } else {
+      content = '${content.trimRight()}\n\n// Core: Shared resources for all features\nvoid _setUpCore() {\n  sl.registerLazySingleton<Dio>(() => Dio());\n}\n';
+    }
   }
 
   // 2. Add `await _setUp<PascalName>();` inside init()

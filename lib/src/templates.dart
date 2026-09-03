@@ -799,11 +799,9 @@ extension UDeviceExtension on BuildContext {
   static const String dioClientContent = r'''
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-import 'package:injectable/injectable.dart';
 
 /// Professional Dio client setup
 /// Configured with interceptors, timeouts, and error handling
-@lazySingleton
 class DioClient {
   late final Dio _dio;
 
@@ -985,10 +983,8 @@ class DioClient {
 ''';
 
   static const String networkInfoContent = '''
-  import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:injectable/injectable.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
-@lazySingleton
 class NetworkInfo {
   final Connectivity _connectivity;
 
@@ -1185,6 +1181,7 @@ class AppLogger {
   static const String dependencyInjectionContent = '''
 import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
+import 'core/network/dio_client.dart';
 
 final sl = GetIt.instance;
 
@@ -1196,7 +1193,8 @@ Future<void> initDependencies() async => init();
 
 // Core: Shared resources for all features
 void _setUpCore() {
-  sl.registerLazySingleton<Dio>(() => Dio());
+  sl.registerLazySingleton<DioClient>(() => DioClient());
+  sl.registerLazySingleton<Dio>(() => sl<DioClient>().dio);
 }
 ''';
 
