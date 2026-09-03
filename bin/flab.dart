@@ -743,24 +743,24 @@ void _printHelp() {
 │                                                             │
 │   Flutter Architecture & Utility CLI Tool (FLAB) v1.0.0     │
 │   Developed by : Rafsanul Rifat                             │
-│   GitHub       : https://github.com/rafsanul247/flab        │
+│   GitHub   : https://github.com/rafsanul247/flab_cli        │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────┬────────────────────────────────────┐
 │  COMMAND                         │  DESCRIPTION                       │
 ├──────────────────────────────────┼────────────────────────────────────┤
-│  ⚡ flab init <appName>          │  # Initialize Flutter project      │
-│  ⚡ flab <Feature> --clean       │  # Scaffold Clean Architecture     │
-│  ⚡ flab <Feature> --mvvm        │  # Scaffold MVVM Architecture      │
-│  ⚡ flab <Feature> -u <UseCase>  │  # Inject custom UseCase           │
-│  ⚡ flab list                    │  # List all created features       │
-│  ⚡ flab rm <Feature>            │  # Safe remove feature             │
-│  ⚡ flab rename <Old> <New>      │  # Rename feature folder           │
-│  ⚡ flab config theme            │  # Inject Themes & Helpers         │
-│  ⚡ flab config assets           │  # Generate assets directories     │
-│  ⚡ flab doctor                  │  # Check project health            │
-│  ⚡ flab tree                    │  # Visual project directory        │
+│  ⚡ flab init <appName>           │  # Initialize Flutter project      │
+│  ⚡ flab <Feature> --clean        │  # Scaffold Clean Architecture     │
+│  ⚡ flab <Feature> --mvvm         │  # Scaffold MVVM Architecture      │
+│  ⚡ flab <Feature> -u <UseCase>   │  # Inject custom UseCase           │
+│  ⚡ flab list                     │  # List all created features       │
+│  ⚡ flab rm <Feature>             │  # Safe remove feature             │
+│  ⚡ flab rename <Old> <New>       │  # Rename feature folder           │
+│  ⚡ flab config theme             │  # Inject Themes & Helpers         │
+│  ⚡ flab config assets            │  # Generate assets directories     │
+│  ⚡ flab doctor                   │  # Check project health            │
+│  ⚡ flab tree                     │  # Visual project directory        │
 └──────────────────────────────────┴────────────────────────────────────┘
   ''');
 }
