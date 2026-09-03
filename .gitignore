@@ -1,3 +1,46 @@
-# https://dart.dev/tools/private-files
-# Created by `dart pub`
+
+# https://dart.dev/guides/libraries/private-files
+
+# --------------------------------------------------
+# Dart & Pub Tools
+# --------------------------------------------------
 .dart_tool/
+.packages
+build/
+.pub/
+
+# Pub packages published to pub.dev should not track pubspec.lock
+# https://dart.dev/tools/pub/versioning#lockfiles
+pubspec.lock
+
+# --------------------------------------------------
+# IDEs and Editors
+# --------------------------------------------------
+# IntelliJ IDEA / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Visual Studio Code
+.vscode/
+
+# --------------------------------------------------
+# OS Generated Files
+# --------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --------------------------------------------------
+# Documentation & Coverage
+# --------------------------------------------------
+doc/api/
+coverage/
+*.log
