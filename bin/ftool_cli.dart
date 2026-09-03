@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:cli_dialog/cli_dialog.dart';
 import 'package:ftool_cli/src/templates.dart';
 import 'package:mason_logger/mason_logger.dart';
+import 'package:path/path.dart' as path;
 
 final Logger _logger = Logger();
 
@@ -79,7 +79,7 @@ void main(List<String> arguments) async {
       }
       return;
     case 'config':
-      _handleConfig(arguments);
+      await _handleConfig(arguments);
       return;
   }
 
@@ -102,20 +102,13 @@ Future<void> _handleInit(String? appName) async {
   String validAppName = appName ?? '';
 
   if (!pubspec.existsSync()) {
-    _logger.info('ℹ️  📋 No Flutter project found. Let\'s create one first...\n');
-
     while (validAppName.isEmpty || !_isValidFlutterAppName(validAppName)) {
-      stdout.write('App name (lowercase, underscores only, no spaces or special characters): ');
+      stdout.write('App name (lowercase, underscores only): ');
       validAppName = stdin.readLineSync()?.trim() ?? '';
-
-      if (!_isValidFlutterAppName(validAppName)) {
-        _logger.err('Invalid package name! Use lowercase letters and underscores only (e.g., my_app).');
-      }
     }
 
     _logger.info('\nCreating Flutter project "$validAppName"...');
 
-    final executable = Platform.isWindows ? 'flutter.bat' : 'flutter';
     final process = await Process.run(
       'flutter', 
       ['create', validAppName], 
@@ -124,18 +117,40 @@ Future<void> _handleInit(String? appName) async {
 
     if (process.exitCode == 0) {
       _logger.success('✅ Flutter project "$validAppName" created successfully!');
-      _logger.info('👉 Run "cd $validAppName" to enter your new project directory.');
+      Directory.current = Directory(validAppName);
+
+      // Auto Execution Tasks
+      await _installDependencies();
+      _cleanPubspec();
+      await _handleConfig(['config', 'theme']);
+      await _handleConfig(['config', 'assets']);
+      await _handleConfig(['config', 'backend']);
+      await _handleConfig(['config', 'utils']);
+      await _handleConfig(['config', 'main']);
+
+      _logger.info('\n👉 Run "cd $validAppName" and start coding!');
     } else {
       _logger.err('Failed to create Flutter project: ${process.stderr}');
     }
   } else {
-    _logger.success('✅ Flutter project already exists in this workspace.');
+    await _installDependencies();
+    _cleanPubspec();
+    await _handleConfig(['config', 'theme']);
+    await _handleConfig(['config', 'assets']);
+    await _handleConfig(['config', 'backend']);
+    await _handleConfig(['config', 'utils']);
+    await _handleConfig(['config', 'main']);
+    _logger.success('✅ Project setup completed successfully!');
   }
 }
 
-bool _isValidFlutterAppName(String name) {
-  final regExp = RegExp(r'^[a-z][a-z0-9_]*$');
-  return regExp.hasMatch(name);
+Future<void> _installDependencies() async {
+  _logger.info('📦 Installing Dio, Hive, GetIt, GoRouter, Google Fonts...');
+  await Process.run(
+    'flutter', 
+    ['pub', 'add', 'dio', 'hive', 'hive_flutter', 'get_it', 'go_router', 'google_fonts', 'connectivity_plus', 'injectable', 'pretty_dio_logger', 'flutter_screenutil'], 
+    runInShell: true,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -150,18 +165,27 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
   }
 
   final snakeName = featureName.toLowerCase();
-  final pascalName = _capitalize(snakeName);
+  final pascalName = _toPascalCase(snakeName);
 
   // Check sub-component generation flags
   if (flags['usecase'] != null) {
-    _createFile('lib/features/$snakeName/domain/usecases/${flags['usecase']}_usecase.dart', '// UseCase: ${flags['usecase']}');
+    _createFile(
+      path.join('lib', 'features', snakeName, 'domain', 'usecases', '${flags['usecase']}_usecase.dart'),
+      '// UseCase: ${flags['usecase']}',
+    );
     _logger.success('UseCase "${flags['usecase']}" generated under $featureName');
     return;
   }
 
   if (flags['model'] != null) {
-    _createFile('lib/features/$snakeName/data/models/${flags['model']}_model.dart', '// Model: ${flags['model']}');
-    _createFile('lib/features/$snakeName/domain/entities/${flags['model']}_entity.dart', '// Entity: ${flags['model']}');
+    _createFile(
+      path.join('lib', 'features', snakeName, 'data', 'models', '${flags['model']}_model.dart'),
+      '// Model: ${flags['model']}',
+    );
+    _createFile(
+      path.join('lib', 'features', snakeName, 'domain', 'entities', '${flags['model']}_entity.dart'),
+      '// Entity: ${flags['model']}',
+    );
     _logger.success('Model & Entity "${flags['model']}" generated under $featureName');
     return;
   }
@@ -171,36 +195,49 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
   if (flags['mvc'] as bool) arch = 'MVC';
   if (flags['mvvm'] as bool) arch = 'MVVM';
 
-  // Base view generation
-  _createFile('lib/features/$snakeName/presentation/views/${snakeName}_screen.dart', '''
-import 'package:flutter/material.dart';
-
-class ${pascalName}Screen extends StatelessWidget {
-  const ${pascalName}Screen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('$pascalName')),
-      body: const Center(child: Text('$pascalName View')),
-    );
-  }
-}
-''');
+  // Base Screen Generation
+  _createFile(
+    path.join('lib', 'features', snakeName, 'presentation', 'views', '${snakeName}_screen.dart'), 
+    Templates.getScreenContent(pascalName),
+  );
 
   if (arch == 'Clean Architecture') {
-    _createFile('lib/features/$snakeName/data/datasources/${snakeName}_remote_data_source.dart', '// Data Source');
-    _createFile('lib/features/$snakeName/data/models/${snakeName}_model.dart', '// Model');
-    _createFile('lib/features/$snakeName/data/repositories/${snakeName}_repository_impl.dart', '// Repository Impl');
-    _createFile('lib/features/$snakeName/domain/entities/${snakeName}_entity.dart', '// Entity');
-    _createFile('lib/features/$snakeName/domain/repositories/${snakeName}_repository.dart', '// Repository');
-    _createFile('lib/features/$snakeName/domain/usecases/get_${snakeName}_usecase.dart', '// UseCase');
+    // 1. Data Layer
+    _createFile(
+      path.join('lib', 'features', snakeName, 'data', 'data_sources', '${snakeName}_data_source.dart'), 
+      Templates.getDataSourceContent(pascalName),
+    );
+    _createFile(
+      path.join('lib', 'features', snakeName, 'data', 'models', '${snakeName}_model.dart'), 
+      Templates.getModelContent(pascalName),
+    );
+    _createFile(
+      path.join('lib', 'features', snakeName, 'data', 'repositories', '${snakeName}_repository_implement.dart'), 
+      Templates.getRepoImplContent(pascalName, snakeName),
+    );
+
+    // 2. Domain Layer
+    _createFile(
+      path.join('lib', 'features', snakeName, 'domain', 'repositories', '${snakeName}_repository.dart'), 
+      Templates.getRepoContent(pascalName),
+    );
+    _createFile(
+      path.join('lib', 'features', snakeName, 'domain', 'usecases', '${snakeName}_usecase.dart'), 
+      Templates.getUseCaseContent(pascalName, snakeName),
+    );
+
+    // 3. Presentation Controller
+    _createFile(
+      path.join('lib', 'features', snakeName, 'presentation', 'manager', 'controller', '${snakeName}_controller.dart'), 
+      Templates.getControllerContent(pascalName, snakeName),
+    );
+
   } else if (arch == 'MVVM') {
-    _createFile('lib/features/$snakeName/viewmodels/${snakeName}_viewmodel.dart', '// ViewModel');
-    _createFile('lib/features/$snakeName/models/${snakeName}_model.dart', '// Model');
+    _createFile(path.join('lib', 'features', snakeName, 'viewmodels', '${snakeName}_viewmodel.dart'), '// ViewModel');
+    _createFile(path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'), '// Model');
   } else if (arch == 'MVC') {
-    _createFile('lib/features/$snakeName/controllers/${snakeName}_controller.dart', '// Controller');
-    _createFile('lib/features/$snakeName/models/${snakeName}_model.dart', '// Model');
+    _createFile(path.join('lib', 'features', snakeName, 'controllers', '${snakeName}_controller.dart'), '// Controller');
+    _createFile(path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'), '// Model');
   }
 
   _logger.success('⚡ Feature "$featureName" generated successfully with $arch!');
@@ -210,31 +247,159 @@ class ${pascalName}Screen extends StatelessWidget {
 // CONFIGURATIONS & UTILITIES
 // ─────────────────────────────────────────────────────────────
 
-void _handleConfig(List<String> args) {
+Future<void> _handleConfig(List<String> args) async {
   if (args.length < 2) return;
   final target = args[1];
 
   switch (target) {
     case 'theme':
-      _createFile('lib/core/theme/app_theme.dart', Templates.appThemeContent);
-      _createFile('lib/core/helpers/device_helpers.dart', Templates.deviceHelpersContent);
-      _createFile('lib/core/extensions/context_extension.dart', Templates.contextExtensionContent);
-      _logger.success('Theme & Device helpers injected successfully!');
+      _createFile(path.join('lib', 'core', 'constants', 'colors.dart'), Templates.colorsContent);
+      _createFile(path.join('lib', 'core', 'constants', 'sizes.dart'), Templates.sizesContent);
+      _createFile(path.join('lib', 'core', 'constants', 'texts.dart'), Templates.textsContent);
+      _createFile(path.join('lib', 'core', 'theme', 'app_theme.dart'), Templates.appThemeContent);
+      _createFile(path.join('lib', 'core', 'theme', 'text_theme.dart'), Templates.textThemeContent);
+
+      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'appbar_theme.dart'), Templates.appBarThemeContent);
+      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'botton_sheet_theme.dart'), Templates.bottomSheetThemeContent);
+      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'checkbox_theme.dart'), Templates.checkboxThemeContent);
+      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'chip_theme.dart'), Templates.chipThemeContent);
+      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'elevated_button_theme.dart'), Templates.elevatedButtonThemeContent);
+      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'outlined_button_theme.dart'), Templates.outlinedButtonThemeContent);
+      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'text_field_theme.dart'), Templates.textFieldThemeContent);
+
+      _createFile(path.join('lib', 'core', 'routes', 'app_router.dart'), Templates.appRouterContent);
+      _createFile(path.join('lib', 'core', 'helpers', 'device_helpers.dart'), Templates.deviceHelpersContent);
+      _createFile(path.join('lib', 'core', 'extensions', 'context_extension.dart'), Templates.contextExtensionContent);
+
+      _logger.success('🎨 Theme system & core routing created successfully!');
       break;
+
     case 'assets':
-      Directory('assets/icons').createSync(recursive: true);
-      Directory('assets/images').createSync(recursive: true);
-      _logger.success('Assets directory structure generated!');
+      Directory(path.join('assets', 'animations')).createSync(recursive: true);
+      Directory(path.join('assets', 'icons')).createSync(recursive: true);
+      Directory(path.join('assets', 'images')).createSync(recursive: true);
+      _logger.success('📁 Assets directory generated!');
       break;
+
+    case 'backend':
+      _createFile(path.join('lib', 'core', 'network', 'dio_client.dart'), Templates.dioClientContent);
+      _createFile(path.join('lib', 'core', 'network', 'network_info.dart'), Templates.networkInfoContent);
+      _createFile(path.join('lib', 'core', 'services', 'hive_service.dart'), Templates.hiveStorageContent);
+      _createFile(path.join('lib', 'injection.dart'), Templates.dependencyInjectionContent);
+      _logger.success('⚡ Backend (Dio, Hive, DI) setup completed!');
+      break;
+
+      case 'utils':
+      _createFile(path.join('lib', 'core', 'utils', 'api_endpoint.dart'), Templates.apiEndpointContent);
+      _createFile(path.join('lib', 'core', 'utils', 'app_logger.dart'), Templates.appLoggerContent);
+      _logger.success('⚡ Utils setup completed!');
+      break;
+
     case 'main':
-      _createFile('lib/app.dart', '// MaterialApp entry point configuration');
-      _logger.success('Cleaned main setup & app.dart created!');
+      _createFile(path.join('lib', 'app.dart'), Templates.appDartContent);
+      _createFile(path.join('lib', 'main.dart'), Templates.mainDartContent);
+      _logger.success('🚀 Clean main.dart & app.dart created!');
       break;
   }
 }
 
+
+/// Clean default comments from pubspec.yaml, configure assets, 
+/// and create the corresponding physical asset directories.
+void _cleanAndConfigurePubspec() {
+  final file = File('pubspec.yaml');
+
+  if (!file.existsSync()) {
+    _logger.err('pubspec.yaml not found!');
+    return;
+  }
+
+  // 1. Create physical asset directories on disk
+  final assetDirectories = [
+    'assets/animations',
+    'assets/icons',
+    'assets/images',
+  ];
+
+  for (final path in assetDirectories) {
+    final dir = Directory(path);
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+  }
+  _logger.success('Created physical asset directories.');
+
+  // 2. Read and filter out comment lines
+  final lines = file.readAsLinesSync();
+  final cleanedLines = lines
+      .where((line) => !line.trim().startsWith('#'))
+      .toList();
+
+  // 3. Remove existing 'flutter:' section to avoid duplication
+  final filteredLines = <String>[];
+  bool inFlutterSection = false;
+
+  for (final line in cleanedLines) {
+    if (line.trim().startsWith('flutter:')) {
+      inFlutterSection = true;
+      continue;
+    }
+
+    // Skip indented properties that belong to the old flutter section
+    if (inFlutterSection && (line.startsWith('  ') || line.trim().isEmpty)) {
+      continue;
+    } else {
+      inFlutterSection = false;
+    }
+
+    filteredLines.add(line);
+  }
+
+  // 4. Append clean flutter configuration with assets
+  final updatedContent = StringBuffer();
+  updatedContent.writeln(filteredLines.join('\n').trim());
+  updatedContent.writeln('\nflutter:');
+  updatedContent.writeln('  uses-material-design: true');
+  updatedContent.writeln('  assets:');
+  for (final path in assetDirectories) {
+    updatedContent.writeln('    - $path/');
+  }
+
+  // 5. Write back to pubspec.yaml
+  file.writeAsStringSync(updatedContent.toString());
+  _logger.success('Cleaned pubspec.yaml and configured assets successfully!');
+}
+
+// void _cleanPubspec() {
+//   final file = File('pubspec.yaml');
+//   if (file.existsSync()) {
+//     final lines = file.readAsLinesSync();
+//     final cleaned = lines.where((line) => !line.trim().startsWith('#')).join('\n');
+//     file.writeAsStringSync(cleaned);
+//     _logger.success('Cleaned comments from pubspec.yaml!');
+//   }
+// }
+
+void _createFile(String filePath, String content) {
+  final file = File(filePath);
+  file.parent.createSync(recursive: true);
+  file.writeAsStringSync(content);
+}
+
+bool _isValidFlutterAppName(String name) {
+  final RegExp regex = RegExp(r'^[a-z][a-z0-9_]*$');
+  return regex.hasMatch(name);
+}
+
+String _toPascalCase(String text) {
+  return text.split(RegExp(r'[_ ]')).map((word) {
+    if (word.isEmpty) return '';
+    return word[0].toUpperCase() + word.substring(1).toLowerCase();
+  }).join('');
+}
+
 void _listFeatures() {
-  final dir = Directory('lib/features');
+  final dir = Directory(path.join('lib', 'features'));
   if (dir.existsSync()) {
     final List<FileSystemEntity> entities = dir.listSync();
     _logger.info('📦 Active Features:');
@@ -249,7 +414,7 @@ void _listFeatures() {
 }
 
 void _removeFeature(String featureName) {
-  final dir = Directory('lib/features/${featureName.toLowerCase()}');
+  final dir = Directory(path.join('lib', 'features', featureName.toLowerCase()));
   if (dir.existsSync()) {
     dir.deleteSync(recursive: true);
     _logger.success('Feature "$featureName" removed successfully.');
@@ -259,22 +424,12 @@ void _removeFeature(String featureName) {
 }
 
 void _renameFeature(String oldName, String newName) {
-  final dir = Directory('lib/features/${oldName.toLowerCase()}');
-  if (dir.existsSync()) {
-    dir.renameSync('lib/features/${newName.toLowerCase()}');
+  final oldDir = Directory(path.join('lib', 'features', oldName.toLowerCase()));
+  if (oldDir.existsSync()) {
+    oldDir.renameSync(path.join('lib', 'features', newName.toLowerCase()));
     _logger.success('Renamed feature "$oldName" to "$newName".');
   } else {
     _logger.err('Feature "$oldName" not found.');
-  }
-}
-
-void _cleanPubspec() {
-  final file = File('pubspec.yaml');
-  if (file.existsSync()) {
-    final lines = file.readAsLinesSync();
-    final cleaned = lines.where((line) => !line.trim().startsWith('#')).join('\n');
-    file.writeAsStringSync(cleaned);
-    _logger.success('Cleaned comments from pubspec.yaml!');
   }
 }
 
@@ -310,19 +465,11 @@ void _printDirectory(Directory dir, String indent) {
   }
 }
 
-void _createFile(String path, String content) {
-  final file = File(path);
-  file.createSync(recursive: true);
-  file.writeAsStringSync(content);
-}
-
-String _capitalize(String str) => str.isEmpty ? '' : '${str[0].toUpperCase()}${str.substring(1)}';
-
 void _printHelp() {
   _logger.info('''
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│   ███████╗████████╗██████╗  ██████╗  ██╗                    │
+│   ███████╗████████╗██████╗ ██████╗ ██╗                      │
 │   ██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗██║                     │
 │   █████╗     ██║   ██║  ██║██║   ██║██║                     │
 │   ██╔══╝     ██║   ██║  ██║██║   ██║██║                     │
@@ -332,23 +479,23 @@ void _printHelp() {
 │   Flutter Architecture & Utility CLI Tool v1.0.0            │
 │   Developed by : Rafsanul Rifat                             │
 │   GitHub       : https://github.com/rafsanul247/ftool_cli   │
-|                                                             |
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────┐
-│ COMMAND                      │ DESCRIPTION                  │
-├──────────────────────────────┼──────────────────────────────┤
-│ ftool init <appName>         │ Initialize Flutter project   │
-│ ftool <Feature> --clean      │ Scaffold Clean Architecture  │
-│ ftool <Feature> --mvvm       │ Scaffold MVVM Architecture   │
-│ ftool <Feature> -u <UseCase> │ Inject custom UseCase        │
-│ ftool list                   │ List all created features    │
-│ ftool rm <Feature>           │ Safe remove feature          │
-│ ftool rename <Old> <New>     │ Rename feature folder        │
-│ ftool config theme           │ Inject Themes & Helpers      │
-│ ftool config assets          │ Generate assets directories  │
-│ ftool doctor                 │ Check project health         │
-│ ftool tree                   │ Visual project directory     │
-└──────────────────────────────┴──────────────────────────────┘
+┌───────────────────────────────────┬────────────────────────────────────┐
+│  COMMAND                          │  DESCRIPTION                       │
+├───────────────────────────────────┼────────────────────────────────────┤
+│  ⚡ ftool init <appName>         │  # Initialize Flutter project      │
+│  ⚡ ftool <Feature> --clean      │  # Scaffold Clean Architecture     │
+│  ⚡ ftool <Feature> --mvvm       │  # Scaffold MVVM Architecture      │
+│  ⚡ ftool <Feature> -u <UseCase> │  # Inject custom UseCase           │
+│  ⚡ ftool list                   │  # List all created features       │
+│  ⚡ ftool rm <Feature>           │  # Safe remove feature             │
+│  ⚡ ftool rename <Old> <New>     │  # Rename feature folder           │
+│  ⚡ ftool config theme           │  # Inject Themes & Helpers         │
+│  ⚡ ftool config assets          │  # Generate assets directories     │
+│  ⚡ ftool doctor                 │  # Check project health            │
+│  ⚡ ftool tree                   │  # Visual project directory        │
+└──────────────────────────────────┴────────────────────────────────────┘
   ''');
 }
