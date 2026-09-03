@@ -695,23 +695,34 @@ class HomePage extends StatelessWidget {
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class UDeviceHelper {
-  UDeviceHelper._();
+// HELPER CLASS PART (Global functions - No context required)
 
+class UDeviceHelper {
+  UDeviceHelper._(); // Private constructor to prevent object instantiation
+
+  // Change the top status bar background color
   static Future<void> setStatusBarColor(Color color) async {
     SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(statusBarColor: color),
+      SystemUiOverlayStyle(statusBarColor: color),                                     // Use: UDeviceHelper.setStatusBarColor(Colors.blue);
     );
   }
 
+  // Toggle immersive fullscreen mode (Hide/Show status bar and navigation bar)
   static void setFullScreen(bool enable) {
     SystemChrome.setEnabledSystemUIMode(
-      enable ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+      enable ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,                 // Use: UDeviceHelper.setFullScreen(true);
     );
   }
 
-  static double getBottomNavigationBarHeight() => kBottomNavigationBarHeight;
-  static double getAppBarHeight() => kToolbarHeight;
+  // Get standard Flutter bottom navigation bar height (56.0 dp)
+  static double getBottomNavigationBarHeight() {
+    return kBottomNavigationBarHeight;                                                 // Use: double barHeight = UDeviceHelper.getBottomNavigationBarHeight();
+  }
+
+  // Get standard Flutter app bar / toolbar height (56.0 dp)
+  static double getAppBarHeight() {
+    return kToolbarHeight;                                                             // Use: double appBarH = UDeviceHelper.getAppBarHeight();
+  }
 }
 ''';
 
@@ -719,25 +730,64 @@ class UDeviceHelper {
   static const String contextExtensionContent = '''
 import 'package:flutter/material.dart';
 
+
+// EXTENSION PART (BuildContext shortcuts - No parameter needed)
+
 extension UDeviceExtension on BuildContext {
-  TextTheme get tt => Theme.of(this).textTheme;
-  ColorScheme get cs => Theme.of(this).colorScheme;
-  bool get isDark => Theme.of(this).brightness == Brightness.dark;
 
-  MediaQueryData get mq => MediaQuery.of(this);
-  double get screenHeight => MediaQuery.of(this).size.height;
-  double get screenWidth => MediaQuery.of(this).size.width;
-  double get keyboardHeight => MediaQuery.of(this).viewInsets.bottom;
+  // ── Theme Shortcuts ──
 
-  bool get isPhone => screenWidth < 600;
-  bool get isTablet => screenWidth >= 600 && screenWidth < 900;
-  bool get isDesktop => screenWidth >= 900;
+  // Get text theme styles
+  TextTheme get tt => Theme.of(this).textTheme;                                        // Use: TextStyle style = context.tt.bodyLarge;
 
-  bool get isPortrait => MediaQuery.of(this).orientation == Orientation.portrait;
-  bool get isLandscape => MediaQuery.of(this).orientation == Orientation.landscape;
+  // Get color scheme colors
+  ColorScheme get cs => Theme.of(this).colorScheme;                                    // Use: Color primaryColor = context.cs.primary;
 
+  // Check if the current theme is dark mode
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;                     // Use: if (context.isDark) { ... }
+
+
+  // ── MediaQuery Shortcuts ──
+
+  // Get full MediaQueryData object
+  MediaQueryData get mq => MediaQuery.of(this);                                        // Use: Size size = context.mq.size;
+
+  // Get full screen height
+  double get screenHeight => MediaQuery.of(this).size.height;                          // Use: double height = context.screenHeight;
+
+  // Get full screen width
+  double get screenWidth => MediaQuery.of(this).size.width;                            // Use: double width = context.screenWidth;
+
+  // Get current keyboard height on screen
+  double get keyboardHeight => MediaQuery.of(this).viewInsets.bottom;                  // Use: double kbHeight = context.keyboardHeight;
+
+
+  // ── Responsive Breakpoints Shortcuts ──
+
+  // Check if the device is a mobile phone (width less than 600)
+  bool get isPhone => screenWidth < 600;                                               // Use: if (context.isPhone) { ... }
+
+  // Check if the device is a tablet (width between 600 and 899)
+  bool get isTablet => screenWidth >= 600 && screenWidth < 900;                        // Use: if (context.isTablet) { ... }
+
+  // Check if the device is a desktop screen (width 900 or more)
+  bool get isDesktop => screenWidth >= 900;                                            // Use: if (context.isDesktop) { ... }
+
+
+  // ── Orientation Shortcuts ──
+
+  // Check if screen is in portrait mode
+  bool get isPortrait => MediaQuery.of(this).orientation == Orientation.portrait;      // Use: if (context.isPortrait) { ... }
+
+  // Check if screen is in landscape mode
+  bool get isLandscape => MediaQuery.of(this).orientation == Orientation.landscape;    // Use: if (context.isLandscape) { ... }
+
+
+  // ── Actions Shortcuts ──
+
+  // Hide software keyboard from screen
   void hideKeyboard() {
-    FocusScope.of(this).requestFocus(FocusNode());
+    FocusScope.of(this).requestFocus(FocusNode());                                     // Use: context.hideKeyboard();
   }
 }
 ''';
@@ -1133,14 +1183,20 @@ class AppLogger {
   ''';
 
   static const String dependencyInjectionContent = '''
+import 'package:dio/dio.dart';
 import 'package:get_it/get_it.dart';
-import 'core/network/dio_client.dart';
 
-final GetIt sl = GetIt.instance;
+final sl = GetIt.instance;
 
-Future<void> initDependencies() async {
-  // Services
-  sl.registerLazySingleton<DioClient>(() => DioClient());
+Future<void> init() async {
+  _setUpCore();
+}
+
+Future<void> initDependencies() async => init();
+
+// Core: Shared resources for all features
+void _setUpCore() {
+  sl.registerLazySingleton<Dio>(() => Dio());
 }
 ''';
 
@@ -1198,7 +1254,7 @@ void main() async {
   await StorageService.init();
 
   // Initialize Dependency Injection
-  await initDependencies();
+  await init();
 
   runApp(const MyApp());
 }
@@ -1209,10 +1265,15 @@ void main() async {
   // =========================================================================
 
   static String getDataSourceContent(String pascalName) => '''
+import 'package:dio/dio.dart';
+
 abstract class ${pascalName}DataSource {
 }
 
 class ${pascalName}DataSourceImplement implements ${pascalName}DataSource {
+  final Dio dio;
+
+  ${pascalName}DataSourceImplement({required this.dio});
 }
 ''';
 

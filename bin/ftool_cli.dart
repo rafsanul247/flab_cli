@@ -239,6 +239,9 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
       Templates.getControllerContent(pascalName, snakeName),
     );
 
+    // 4. Dependency Injection
+    _addFeatureToInjection(snakeName, pascalName);
+
   } else if (arch == 'MVVM') {
     _createFile(path.join('lib', 'features', snakeName, 'viewmodels', '${snakeName}_viewmodel.dart'), '// ViewModel');
     _createFile(path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'), '// Model');
@@ -420,6 +423,148 @@ void _fixWidgetTest([String? appName]) {
   widgetTestFile.writeAsStringSync(updated);
 }
 
+void _addFeatureToInjection(String snakeName, String pascalName) {
+  final file = File(path.join('lib', 'injection.dart'));
+  if (!file.existsSync()) {
+    _createFile(file.path, Templates.dependencyInjectionContent);
+  }
+
+  var content = file.readAsStringSync();
+  final isCrlf = content.contains('\r\n');
+  content = content.replaceAll('\r\n', '\n');
+
+  if (!content.contains("package:dio/dio.dart")) {
+    content = "import 'package:dio/dio.dart';\n$content";
+  }
+  if (!content.contains("package:get_it/get_it.dart")) {
+    content = "import 'package:get_it/get_it.dart';\n$content";
+  }
+
+  // 1. Prepare feature imports
+  final featureImports = [
+    "import 'features/$snakeName/data/data_sources/${snakeName}_data_source.dart';",
+    "import 'features/$snakeName/data/repositories/${snakeName}_repository_implement.dart';",
+    "import 'features/$snakeName/domain/repositories/${snakeName}_repository.dart';",
+    "import 'features/$snakeName/domain/usecases/${snakeName}_usecase.dart';",
+    "import 'features/$snakeName/presentation/manager/controller/${snakeName}_controller.dart';",
+  ];
+
+  final importsToAdd = featureImports.where((imp) => !content.contains(imp)).toList();
+
+  if (importsToAdd.isNotEmpty) {
+    final lastImportMatch = RegExp(r"""^import\s+['"][^'"]*['"];""", multiLine: true)
+        .allMatches(content)
+        .lastOrNull;
+
+    if (lastImportMatch != null) {
+      final insertPos = lastImportMatch.end;
+      content = '${content.substring(0, insertPos)}\n\n${importsToAdd.join('\n')}${content.substring(insertPos)}';
+    } else {
+      content = '${importsToAdd.join('\n')}\n\n$content';
+    }
+  }
+
+  // Ensure _setUpCore is defined and called
+  if (!content.contains('_setUpCore()')) {
+    final initMatch = RegExp(r"(Future<void>\s+(?:init|initDependencies)\s*\(\)\s*async\s*\{)([\s\S]*?)(\})").firstMatch(content);
+    if (initMatch != null) {
+      final beforeBrace = initMatch.group(1)!;
+      final body = initMatch.group(2)!;
+      final newBody = '\n  _setUpCore();$body';
+      content = '${content.substring(0, initMatch.start + beforeBrace.length)}$newBody${content.substring(initMatch.end - 1)}';
+    }
+  }
+  if (!content.contains('void _setUpCore()')) {
+    content = '${content.trimRight()}\n\n// Core: সব feature-এর জন্য shared জিনিস\nvoid _setUpCore() {\n  sl.registerLazySingleton<Dio>(() => Dio());\n}\n';
+  }
+
+  // 2. Add `await _setUp<PascalName>();` inside init()
+  final setupCall = 'await _setUp$pascalName();';
+  if (!content.contains(setupCall)) {
+    final initMatch = RegExp(r"(Future<void>\s+(?:init|initDependencies)\s*\(\)\s*async\s*\{)([\s\S]*?)(\})").firstMatch(content);
+    if (initMatch != null) {
+      final beforeBrace = initMatch.group(1)!;
+      final body = initMatch.group(2)!;
+      if (!body.contains('_setUp$pascalName')) {
+        final newBody = '${body.trimRight()}\n  $setupCall\n';
+        content = '${content.substring(0, initMatch.start + beforeBrace.length)}$newBody${content.substring(initMatch.end - 1)}';
+      }
+    }
+  }
+
+  // 3. Add `Future<void> _setUp<PascalName>() async { ... }` function
+  final functionName = '_setUp$pascalName';
+  if (!content.contains('Future<void> $functionName')) {
+    final setupFunction = '''
+
+Future<void> $functionName() async {
+  // Data Sources
+  sl.registerLazySingleton<${pascalName}DataSource>(
+    () => ${pascalName}DataSourceImplement(dio: sl()),
+  );
+
+  // Repositories
+  sl.registerLazySingleton<${pascalName}Repository>(
+    () => ${pascalName}RepositoryImplement(dataSource: sl()),
+  );
+
+  // Use Cases
+  sl.registerLazySingleton(() => ${pascalName}UseCase(repository: sl()));
+
+  // Controllers
+  sl.registerFactory(() => ${pascalName}Controller(sl()));
+}
+''';
+    content = '${content.trimRight()}\n$setupFunction';
+  }
+
+  if (isCrlf) {
+    content = content.replaceAll('\n', '\r\n');
+  }
+
+  file.writeAsStringSync(content);
+  _logger.success('⚡ Injected "$pascalName" into lib/injection.dart');
+}
+
+void _removeFeatureFromInjection(String snakeName, String pascalName) {
+  final file = File(path.join('lib', 'injection.dart'));
+  if (!file.existsSync()) return;
+
+  var content = file.readAsStringSync();
+  final isCrlf = content.contains('\r\n');
+  content = content.replaceAll('\r\n', '\n');
+
+  // 1. Remove feature imports and init call line
+  final lines = content.split('\n');
+  final filteredLines = <String>[];
+  for (final line in lines) {
+    if (line.trim().startsWith('import') && line.contains('features/$snakeName/')) {
+      continue;
+    }
+    if (line.contains('_setUp$pascalName()')) {
+      continue;
+    }
+    filteredLines.add(line);
+  }
+  content = filteredLines.join('\n');
+
+  // 2. Remove the _setUp<PascalName>() function definition
+  final setupRegex = RegExp(
+    '\\n*Future<void>\\s+_setUp$pascalName\\s*\\(\\)\\s*async\\s*\\{[\\s\\S]*?\\n\\}',
+  );
+  content = content.replaceAll(setupRegex, '');
+
+  // 3. Clean up extra blank lines
+  content = '${content.replaceAll(RegExp(r'\n{3,}'), '\n\n').trimRight()}\n';
+
+  if (isCrlf) {
+    content = content.replaceAll('\n', '\r\n');
+  }
+
+  file.writeAsStringSync(content);
+  _logger.success('🗑️ Removed "$pascalName" from lib/injection.dart');
+}
+
 bool _isValidFlutterAppName(String name) {
   final RegExp regex = RegExp(r'^[a-z][a-z0-9_]*$');
   return regex.hasMatch(name);
@@ -448,9 +593,17 @@ void _listFeatures() {
 }
 
 void _removeFeature(String featureName) {
-  final dir = Directory(path.join('lib', 'features', featureName.toLowerCase()));
+  final snakeName = featureName.toLowerCase();
+  final pascalName = _toPascalCase(snakeName);
+
+  final dir = Directory(path.join('lib', 'features', snakeName));
   if (dir.existsSync()) {
     dir.deleteSync(recursive: true);
+    final testDir = Directory(path.join('test', 'features', snakeName));
+    if (testDir.existsSync()) {
+      testDir.deleteSync(recursive: true);
+    }
+    _removeFeatureFromInjection(snakeName, pascalName);
     _logger.success('Feature "$featureName" removed successfully.');
   } else {
     _logger.err('Feature "$featureName" does not exist.');
@@ -458,9 +611,20 @@ void _removeFeature(String featureName) {
 }
 
 void _renameFeature(String oldName, String newName) {
-  final oldDir = Directory(path.join('lib', 'features', oldName.toLowerCase()));
+  final oldSnake = oldName.toLowerCase();
+  final newSnake = newName.toLowerCase();
+  final oldPascal = _toPascalCase(oldSnake);
+  final newPascal = _toPascalCase(newSnake);
+
+  final oldDir = Directory(path.join('lib', 'features', oldSnake));
   if (oldDir.existsSync()) {
-    oldDir.renameSync(path.join('lib', 'features', newName.toLowerCase()));
+    oldDir.renameSync(path.join('lib', 'features', newSnake));
+    final oldTestDir = Directory(path.join('test', 'features', oldSnake));
+    if (oldTestDir.existsSync()) {
+      oldTestDir.renameSync(path.join('test', 'features', newSnake));
+    }
+    _removeFeatureFromInjection(oldSnake, oldPascal);
+    _addFeatureToInjection(newSnake, newPascal);
     _logger.success('Renamed feature "$oldName" to "$newName".');
   } else {
     _logger.err('Feature "$oldName" not found.');
