@@ -1,12 +1,29 @@
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:ftool_cli/src/templates.dart';
+import 'package:flab/src/templates.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as path;
 
 final Logger _logger = Logger();
 
-void main(List<String> arguments) async {
+Future<void> main(List<String> arguments) async {
+  // 1. Direct help check
+  if (arguments.isEmpty ||
+      arguments.first == 'help' ||
+      arguments.contains('--help') ||
+      arguments.contains('-h')) {
+    _printHelp();
+    return;
+  }
+
+  // 2. Direct version check
+  if (arguments.first == 'version' ||
+      arguments.contains('--version') ||
+      arguments.contains('-v')) {
+    _logger.info('FLAB CLI Version: 1.0.0');
+    return;
+  }
+
   final parser = ArgParser()
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Show help guide')
     ..addFlag('version', abbr: 'v', negatable: false, help: 'Show version')
@@ -26,22 +43,17 @@ void main(List<String> arguments) async {
   try {
     results = parser.parse(arguments);
   } catch (e) {
-    _logger.err('Invalid command usage. Run "ftool --help" for options.');
+    _logger.err('Invalid command usage. Run "flab --help" for options.');
     return;
   }
 
-  if (results['help'] as bool || arguments.contains('help')) {
+  if (results['help'] as bool) {
     _printHelp();
     return;
   }
 
-  if (results['version'] as bool || arguments.contains('-v')) {
-    _logger.info('FTOOL CLI Version: 1.0.0');
-    return;
-  }
-
-  if (arguments.isEmpty) {
-    _printHelp();
+  if (results['version'] as bool) {
+    _logger.info('FLAB CLI Version: 1.0.0');
     return;
   }
 
@@ -64,18 +76,24 @@ void main(List<String> arguments) async {
       _listFeatures();
       return;
     case 'rm':
-      if (arguments.length > 1) _removeFeature(arguments[1]);
+      if (arguments.length > 1) {
+        _removeFeature(arguments[1]);
+      } else {
+        _logger.err('Usage: flab rm <FeatureName>');
+      }
       return;
     case 'rename':
       if (arguments.length > 2) {
         _renameFeature(arguments[1], arguments[2]);
       } else {
-        _logger.err('Usage: ftool rename <OldName> <NewName>');
+        _logger.err('Usage: flab rename <OldName> <NewName>');
       }
       return;
     case 'clean':
       if (arguments.length > 1 && arguments[1] == 'pubspec') {
         _cleanPubspec();
+      } else {
+        _logger.err('Usage: flab clean pubspec');
       }
       return;
     case 'config':
@@ -98,28 +116,66 @@ Future<void> _handleInit(String? appName) async {
 ============================================================
 ''');
 
-  final pubspec = File('pubspec.yaml');
-  String validAppName = appName ?? '';
+  final currentPubspec = File('pubspec.yaml');
+  String validAppName = appName?.trim() ?? '';
 
-  if (!pubspec.existsSync()) {
+  if (validAppName.isNotEmpty) {
+    if (!_isValidFlutterAppName(validAppName)) {
+      _logger.err(
+        'Invalid Flutter project name "$validAppName". Must be lowercase, numbers and underscores only, starting with a lowercase letter (e.g. my_app).',
+      );
+      return;
+    }
+    await _createNewFlutterProject(validAppName);
+    return;
+  }
+
+  // No appName provided
+  if (!currentPubspec.existsSync()) {
     while (validAppName.isEmpty || !_isValidFlutterAppName(validAppName)) {
       stdout.write('App name (lowercase, underscores only): ');
       validAppName = stdin.readLineSync()?.trim() ?? '';
+      if (validAppName.isNotEmpty && !_isValidFlutterAppName(validAppName)) {
+        _logger.err('Invalid Flutter project name. Please try again.');
+      }
     }
+    await _createNewFlutterProject(validAppName);
+  } else {
+    // Current directory already has a pubspec.yaml
+    _cleanPubspec();
+    await _installDependencies();
+    await _handleConfig(['config', 'theme']);
+    await _handleConfig(['config', 'assets']);
+    await _handleConfig(['config', 'backend']);
+    await _handleConfig(['config', 'utils']);
+    await _handleConfig(['config', 'main']);
+    _fixWidgetTest();
+    _logger.success('✅ Project setup completed successfully!');
+  }
+}
 
-    _logger.info('\nCreating Flutter project "$validAppName"...');
+Future<void> _createNewFlutterProject(String validAppName) async {
+  final targetDir = Directory(path.join(Directory.current.path, validAppName));
+  if (targetDir.existsSync()) {
+    _logger.err('Directory "$validAppName" already exists! Please choose another name or remove the existing directory.');
+    return;
+  }
 
-    final process = await Process.run(
-      'flutter', 
-      ['create', validAppName], 
-      runInShell: true,
-    );
+  _logger.info('Creating Flutter project "$validAppName"...');
 
-    if (process.exitCode == 0) {
-      _logger.success('✅ Flutter project "$validAppName" created successfully!');
-      Directory.current = Directory(validAppName);
+  final process = await Process.run(
+    'flutter',
+    ['create', validAppName],
+    runInShell: true,
+  );
 
-      // Auto Execution Tasks
+  if (process.exitCode == 0) {
+    _logger.success('✅ Flutter project "$validAppName" created successfully!');
+    final originalDir = Directory.current;
+    Directory.current = targetDir;
+
+    try {
+      // Auto Execution Tasks inside the new Flutter project
       _cleanPubspec();
       await _installDependencies();
       await _handleConfig(['config', 'theme']);
@@ -130,26 +186,34 @@ Future<void> _handleInit(String? appName) async {
       _fixWidgetTest(validAppName);
 
       _logger.info('\n👉 Run "cd $validAppName" and start coding!');
-    } else {
-      _logger.err('Failed to create Flutter project: ${process.stderr}');
+    } finally {
+      Directory.current = originalDir;
     }
   } else {
-    _cleanPubspec();
-    await _installDependencies();
-    await _handleConfig(['config', 'theme']);
-    await _handleConfig(['config', 'assets']);
-    await _handleConfig(['config', 'backend']);
-    await _handleConfig(['config', 'utils']);
-    await _handleConfig(['config', 'main']);
-    _logger.success('✅ Project setup completed successfully!');
+    _logger.err('Failed to create Flutter project: ${process.stderr}');
+    if (process.stdout.toString().isNotEmpty) {
+      _logger.info(process.stdout.toString());
+    }
   }
 }
 
 Future<void> _installDependencies() async {
   _logger.info('📦 Installing Dio, Hive, GetIt, GoRouter, Google Fonts...');
   final process = await Process.run(
-    'flutter', 
-    ['pub', 'add', 'dio', 'hive', 'hive_flutter', 'get_it', 'go_router', 'google_fonts', 'connectivity_plus', 'pretty_dio_logger', 'flutter_screenutil'], 
+    'flutter',
+    [
+      'pub',
+      'add',
+      'dio',
+      'hive',
+      'hive_flutter',
+      'get_it',
+      'go_router',
+      'google_fonts',
+      'connectivity_plus',
+      'pretty_dio_logger',
+      'flutter_screenutil',
+    ],
     runInShell: true,
     workingDirectory: Directory.current.path,
   );
@@ -167,7 +231,7 @@ Future<void> _installDependencies() async {
 void _handleFeatureCreation(String featureName, ArgResults flags) {
   final pubspec = File('pubspec.yaml');
   if (!pubspec.existsSync()) {
-    _logger.err('No Flutter project found here! Run "ftool init" first.');
+    _logger.err('No Flutter project found here! Run "flab init" first.');
     return;
   }
 
@@ -204,44 +268,43 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
 
   // Base Screen Generation
   _createFile(
-    path.join('lib', 'features', snakeName, 'presentation', 'views', '${snakeName}_screen.dart'), 
+    path.join('lib', 'features', snakeName, 'presentation', 'views', '${snakeName}_screen.dart'),
     Templates.getScreenContent(pascalName),
   );
 
   if (arch == 'Clean Architecture') {
     // 1. Data Layer
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'data_sources', '${snakeName}_data_source.dart'), 
+      path.join('lib', 'features', snakeName, 'data', 'data_sources', '${snakeName}_data_source.dart'),
       Templates.getDataSourceContent(pascalName),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'models', '${snakeName}_model.dart'), 
+      path.join('lib', 'features', snakeName, 'data', 'models', '${snakeName}_model.dart'),
       Templates.getModelContent(pascalName),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'repositories', '${snakeName}_repository_implement.dart'), 
+      path.join('lib', 'features', snakeName, 'data', 'repositories', '${snakeName}_repository_implement.dart'),
       Templates.getRepoImplContent(pascalName, snakeName),
     );
 
     // 2. Domain Layer
     _createFile(
-      path.join('lib', 'features', snakeName, 'domain', 'repositories', '${snakeName}_repository.dart'), 
+      path.join('lib', 'features', snakeName, 'domain', 'repositories', '${snakeName}_repository.dart'),
       Templates.getRepoContent(pascalName),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'domain', 'usecases', '${snakeName}_usecase.dart'), 
+      path.join('lib', 'features', snakeName, 'domain', 'usecases', '${snakeName}_usecase.dart'),
       Templates.getUseCaseContent(pascalName, snakeName),
     );
 
     // 3. Presentation Controller
     _createFile(
-      path.join('lib', 'features', snakeName, 'presentation', 'manager', 'controller', '${snakeName}_controller.dart'), 
+      path.join('lib', 'features', snakeName, 'presentation', 'manager', 'controller', '${snakeName}_controller.dart'),
       Templates.getControllerContent(pascalName, snakeName),
     );
 
     // 4. Dependency Injection
     _addFeatureToInjection(snakeName, pascalName);
-
   } else if (arch == 'MVVM') {
     _createFile(path.join('lib', 'features', snakeName, 'viewmodels', '${snakeName}_viewmodel.dart'), '// ViewModel');
     _createFile(path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'), '// Model');
@@ -299,7 +362,7 @@ Future<void> _handleConfig(List<String> args) async {
       _logger.success('⚡ Backend (Dio, Hive, DI) setup completed!');
       break;
 
-      case 'utils':
+    case 'utils':
       _createFile(path.join('lib', 'core', 'utils', 'api_endpoint.dart'), Templates.apiEndpointContent);
       _createFile(path.join('lib', 'core', 'utils', 'app_logger.dart'), Templates.appLoggerContent);
       _logger.success('⚡ Utils setup completed!');
@@ -314,8 +377,7 @@ Future<void> _handleConfig(List<String> args) async {
   }
 }
 
-
-/// Clean default comments from pubspec.yaml, configure assets, 
+/// Clean default comments from pubspec.yaml, configure assets,
 /// and create the corresponding physical asset directories.
 void _cleanAndConfigurePubspec() {
   final file = File('pubspec.yaml');
@@ -342,9 +404,7 @@ void _cleanAndConfigurePubspec() {
 
   // 2. Read and filter out comment lines
   final lines = file.readAsLinesSync();
-  final cleanedLines = lines
-      .where((line) => !line.trim().startsWith('#'))
-      .toList();
+  final cleanedLines = lines.where((line) => !line.trim().startsWith('#')).toList();
 
   // 3. Remove existing root-level 'flutter:' section to avoid duplication
   final filteredLines = <String>[];
@@ -386,7 +446,6 @@ void _cleanAndConfigurePubspec() {
 void _cleanPubspec() {
   _cleanAndConfigurePubspec();
 }
-
 
 void _createFile(String filePath, String content) {
   final file = File(filePath);
@@ -640,7 +699,7 @@ void _renameFeature(String oldName, String newName) {
 }
 
 void _runDoctor() {
-  _logger.info('Running FTOOL Health Check...');
+  _logger.info('Running FLAB Health Check...');
   final pubspec = File('pubspec.yaml');
   if (pubspec.existsSync()) {
     _logger.success('Valid Flutter project environment.');
@@ -675,33 +734,33 @@ void _printHelp() {
   _logger.info('''
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│   ███████╗████████╗██████╗ ██████╗ ██╗                      │
-│   ██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗██║                     │
-│   █████╗     ██║   ██║  ██║██║   ██║██║                     │
-│   ██╔══╝     ██║   ██║  ██║██║   ██║██║                     │
-│   ██║        ██║   ╚██████╔╝╚██████╔╝███████╗               │
-│   ╚═╝        ╚═╝    ╚═════╝  ╚═════╝ ╚══════╝               │
+│             ███████╗██╗       █████╗  ██████╗               │
+│             ██╔════╝██║      ██╔══██╗ ██╔══██╗              │
+│             █████╗  ██║      ███████║ ██████╔╝              │
+│             ██╔══╝  ██║      ██╔══██║ ██╔══██╗              │
+│             ██║     ███████╗ ██║  ██║ ██████╔╝              │
+│             ╚═╝     ╚══════╝ ╚═╝  ╚═╝ ╚═════╝               │
 │                                                             │
-│   Flutter Architecture & Utility CLI Tool v1.0.0            │
+│   Flutter Architecture & Utility CLI Tool (FLAB) v1.0.0     │
 │   Developed by : Rafsanul Rifat                             │
-│   GitHub       : https://github.com/rafsanul247/ftool_cli   │
+│   GitHub       : https://github.com/rafsanul247/flab        │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────┬────────────────────────────────────┐
 │  COMMAND                         │  DESCRIPTION                       │
 ├──────────────────────────────────┼────────────────────────────────────┤
-│  ⚡ ftool init <appName>          │  # Initialize Flutter project      │
-│  ⚡ ftool <Feature> --clean       │  # Scaffold Clean Architecture     │
-│  ⚡ ftool <Feature> --mvvm        │  # Scaffold MVVM Architecture      │
-│  ⚡ ftool <Feature> -u <UseCase>  │  # Inject custom UseCase           │
-│  ⚡ ftool list                    │  # List all created features       │
-│  ⚡ ftool rm <Feature>            │  # Safe remove feature             │
-│  ⚡ ftool rename <Old> <New>      │  # Rename feature folder           │
-│  ⚡ ftool config theme            │  # Inject Themes & Helpers         │
-│  ⚡ ftool config assets           │  # Generate assets directories     │
-│  ⚡ ftool doctor                  │  # Check project health            │
-│  ⚡ ftool tree                    │  # Visual project directory        │
+│  ⚡ flab init <appName>          │  # Initialize Flutter project      │
+│  ⚡ flab <Feature> --clean       │  # Scaffold Clean Architecture     │
+│  ⚡ flab <Feature> --mvvm        │  # Scaffold MVVM Architecture      │
+│  ⚡ flab <Feature> -u <UseCase>  │  # Inject custom UseCase           │
+│  ⚡ flab list                    │  # List all created features       │
+│  ⚡ flab rm <Feature>            │  # Safe remove feature             │
+│  ⚡ flab rename <Old> <New>      │  # Rename feature folder           │
+│  ⚡ flab config theme            │  # Inject Themes & Helpers         │
+│  ⚡ flab config assets           │  # Generate assets directories     │
+│  ⚡ flab doctor                  │  # Check project health            │
+│  ⚡ flab tree                    │  # Visual project directory        │
 └──────────────────────────────────┴────────────────────────────────────┘
   ''');
 }

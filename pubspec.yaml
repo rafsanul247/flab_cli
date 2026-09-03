@@ -1,13 +1,13 @@
-name: ftool_cli
+name: flab
 description: A CLI tool to scaffold Flutter projects with Clean Architecture, MVVM, MVC, and custom themes.
 version: 1.0.0
-repository: https://github.com/your_username/ftool_cli
+repository: https://github.com/rafsanul247/flab
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
 executables:
-  ftool: ftool_cli
+  flab: flab
 
 dependencies:
   args: ^2.4.2
