@@ -1,6 +1,5 @@
-
 /// Example showing how to use the FLAB CLI commands in your terminal.
-void main() async {
+void main() {
   print('--- FLAB CLI Quick Usage Example ---\n');
 
   // 1. Initialize Project
