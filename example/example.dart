@@ -1,4 +1,3 @@
-import 'dart:io';
 
 /// Example showing how to use the FLAB CLI commands in your terminal.
 void main() async {
