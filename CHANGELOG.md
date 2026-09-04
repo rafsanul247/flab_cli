@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-09-04
+
+### Added
+- Created official `example/example.dart` usage guide to fulfill pub.dev publication requirements and achieve a full package score.
+
+### Fixed
+- Updated core dependencies (`args`, `mason_logger`, `path`, `io`, `cli_dialog`) to their latest stable versions in `pubspec.yaml` to address pub.dev package constraint warnings.
+- Fixed `widget_test.dart` import error by dynamically referencing `app.dart` based on the initialized project name.
+
+---
+
 ## [1.0.0] - 2024-09-04
 
 ### Added
