@@ -1,6 +1,3 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/rafsanul247/flab_cli/main/assets/banner.png" alt="FLAB CLI Banner" width="100%" onerror="this.style.display='none'"/>
-</p>
 
 # 🚀 FLAB CLI (Flutter Architecture & Booster)
 
