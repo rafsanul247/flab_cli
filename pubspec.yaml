@@ -1,6 +1,6 @@
 name: flab
 description: A CLI tool to scaffold Flutter projects with Clean Architecture, MVVM, MVC, and custom themes.
-version: 1.0.1
+version: 1.0.2
 repository: https://github.com/rafsanul247/flab_cli
 
 environment:
