@@ -73,7 +73,7 @@ Check if the CLI is accessible from your terminal:
 
 ```bash
 flab --version
-# Output: FLAB CLI Version: 1.0.3
+# Output: FLAB CLI Version: 1.0.4
 
 flab --help
 ```
@@ -200,9 +200,9 @@ lib/features/<feature_name>/
 │   └── usecases/
 │       └── <feature_name>_usecase.dart             # Business logic use cases
 └── presentation/
-    ├── manager/
+    ├── manager/                                    # Generated for Clean + GetX
     │   └── controller/
-    │       └── <feature_name>_controller.dart      # Feature controller/state holder
+    │       └── <feature_name>_controller.dart      # GetX feature controller/state holder
     ├── views/
         ├── widgets/                                # Feature-specific widgets
         └── <feature_name>_screen.dart              # UI view screen
@@ -210,7 +210,7 @@ lib/features/<feature_name>/
       └── <feature_name>_<state_management>.dart  # Provider, Riverpod, or Bloc starter
 ```
 
-  For Clean Architecture with GetX, the manager controller is used as the state holder, so no separate `presentation/state` GetX file is generated.
+For Clean Architecture with GetX, the manager controller is used as the state holder, so no separate `presentation/state` GetX file is generated. When Provider, Riverpod, or Bloc is selected, the matching starter state file is generated instead.
 
 ---
 
@@ -244,7 +244,7 @@ flab auth
 ```bash
 flab auth --clean
 ```
-> *The CLI asks you to choose Provider, Riverpod, GetX, or Bloc, installs the matching package, and generates a starter state file when needed. Clean Architecture with GetX uses the manager controller instead of a separate state file.*
+> *The CLI asks you to choose Provider, Riverpod, GetX, or Bloc and installs the matching package. Provider, Riverpod, and Bloc generate a starter state file; GetX uses the manager controller instead.*
 
 #### MVVM Architecture
 ```bash

@@ -20,7 +20,7 @@ Future<void> main(List<String> arguments) async {
   if (arguments.first == 'version' ||
       arguments.contains('--version') ||
       arguments.contains('-v')) {
-    _logger.info('FLAB CLI Version: 1.0.3');
+    _logger.info('FLAB CLI Version: 1.0.4');
     return;
   }
 
@@ -53,7 +53,7 @@ Future<void> main(List<String> arguments) async {
   }
 
   if (results['version'] as bool) {
-    _logger.info('FLAB CLI Version: 1.0.3');
+    _logger.info('FLAB CLI Version: 1.0.4');
     return;
   }
 
@@ -943,7 +943,7 @@ void _printHelp() {
 │             ██║     ███████╗ ██║  ██║ ██████╔╝              │
 │             ╚═╝     ╚══════╝ ╚═╝  ╚═╝ ╚═════╝               │
 │                                                             │
-│   Flutter Architecture & Utility CLI Tool (FLAB) v1.0.3     │
+│   Flutter Architecture & Utility CLI Tool (FLAB) v1.0.4     │
 │   Developed by : Rafsanul Rifat                             │
 │   GitHub   : https://github.com/rafsanul247/flab_cli        │
 │                                                             │
