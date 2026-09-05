@@ -198,13 +198,14 @@ Future<void> _createNewFlutterProject(String validAppName) async {
 }
 
 Future<void> _installDependencies() async {
-  _logger.info('📦 Installing Dio, Hive, GetIt, GoRouter, Google Fonts...');
+  _logger.info('📦 Installing Dio, Dartz, Hive, GetIt, GoRouter, Google Fonts...');
   final process = await Process.run(
     'flutter',
     [
       'pub',
       'add',
       'dio',
+      'dartz',
       'hive',
       'hive_flutter',
       'get_it',
@@ -312,7 +313,7 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
     );
     _createFile(
       path.join('lib', 'features', snakeName, 'domain', 'repositories', '${snakeName}_repository.dart'),
-      Templates.getRepoContent(pascalName),
+      Templates.getRepoContent(pascalName, snakeName),
     );
     _createFile(
       path.join('lib', 'features', snakeName, 'domain', 'usecases', '${snakeName}_usecase.dart'),
@@ -380,8 +381,9 @@ Future<void> _handleConfig(List<String> args) async {
       _createFile(path.join('lib', 'core', 'network', 'dio_client.dart'), Templates.dioClientContent);
       _createFile(path.join('lib', 'core', 'network', 'network_info.dart'), Templates.networkInfoContent);
       _createFile(path.join('lib', 'core', 'services', 'hive_service.dart'), Templates.hiveStorageContent);
+      _createFile(path.join('lib', 'core', 'error', 'failures.dart'), Templates.failuresContent);
       _createFile(path.join('lib', 'injection.dart'), Templates.dependencyInjectionContent);
-      _logger.success('⚡ Backend (Dio, Hive, DI) setup completed!');
+      _logger.success('⚡ Backend (Dio, Hive, DI, Failures) setup completed!');
       break;
 
     case 'utils':

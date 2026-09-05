@@ -328,6 +328,7 @@ Projects created or configured with `flab` come pre-equipped with industry stand
 | [`get_it`](https://pub.dev/packages/get_it) | Fast Service Locator for Dependency Injection |
 | [`go_router`](https://pub.dev/packages/go_router) | Declarative routing package for Flutter |
 | [`dio`](https://pub.dev/packages/dio) | Powerful HTTP client with interceptors & global configuration |
+| [`dartz`](https://pub.dev/packages/dartz) | Functional programming — `Either` for typed error handling |
 | [`pretty_dio_logger`](https://pub.dev/packages/pretty_dio_logger) | Formatted network request and response logging |
 | [`hive`](https://pub.dev/packages/hive) & [`hive_flutter`](https://pub.dev/packages/hive_flutter) | Lightweight and blazingly fast key-value offline storage |
 | [`flutter_screenutil`](https://pub.dev/packages/flutter_screenutil) | Responsive UI adaptation and text scaling |

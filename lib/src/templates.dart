@@ -1300,7 +1300,17 @@ class ${pascalName}DataSourceImplement implements ${pascalName}DataSource {
 
   static String getEntityContent(String pascalName) => '''
 class ${pascalName}Entity {
-  const ${pascalName}Entity();
+  // TODO: Define entity properties here
+  // final String? id;
+  // final String? name;
+
+  const ${pascalName}Entity(
+    // TODO: Pass entity properties to constructor
+    // {
+    //   this.id,
+    //   this.name,
+    // }
+  );
 }
 ''';
 
@@ -1387,10 +1397,19 @@ class ${pascalName}RepositoryImplement implements ${pascalName}Repository {
 }
 ''';
 
-  static String getRepoContent(String pascalName) => '''
+  static String getRepoContent(String pascalName, [String? snakeName]) {
+    final entitySnake = snakeName ?? pascalName.toLowerCase();
+    return '''
+import 'package:dartz/dartz.dart';
+import '../../../../core/error/failures.dart';
+import '../entities/${entitySnake}_entity.dart';
+
 abstract class ${pascalName}Repository {
+  // TODO: Define repository methods here
+  // Future<Either<Failure, List<${pascalName}Entity>>> getUsers();
 }
 ''';
+  }
 
   static String getUseCaseContent(String pascalName, String snakeName) => '''
 import '../repositories/${snakeName}_repository.dart';

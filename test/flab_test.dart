@@ -8,7 +8,10 @@ void main() {
     test('Templates.getEntityContent generates valid entity class', () {
       final content = Templates.getEntityContent('Home');
       expect(content, contains('class HomeEntity {'));
-      expect(content, contains('const HomeEntity();'));
+      expect(content, contains('// TODO: Define entity properties here'));
+      expect(content, contains('// final String? id;'));
+      expect(content, contains('const HomeEntity('));
+      expect(content, contains('// TODO: Pass entity properties to constructor'));
     });
 
     test('Templates.getModelContent generates valid model extending entity', () {
