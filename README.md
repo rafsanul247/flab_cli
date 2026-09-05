@@ -207,8 +207,10 @@ lib/features/<feature_name>/
         ├── widgets/                                # Feature-specific widgets
         └── <feature_name>_screen.dart              # UI view screen
     └── state/
-      └── <feature_name>_<state_management>.dart  # Provider, Riverpod, GetX, or Bloc starter
+      └── <feature_name>_<state_management>.dart  # Provider, Riverpod, or Bloc starter
 ```
+
+  For Clean Architecture with GetX, the manager controller is used as the state holder, so no separate `presentation/state` GetX file is generated.
 
 ---
 
@@ -236,13 +238,13 @@ Scaffold features according to your preferred architectural pattern:
 ```bash
 flab auth
 ```
-> *Generates Clean Architecture layers with a GetX state file and installs the `get` package.*
+> *Generates Clean Architecture layers with a manager controller and installs the `get` package.*
 
 #### Clean Architecture with Selected State Management
 ```bash
 flab auth --clean
 ```
-> *The CLI asks you to choose Provider, Riverpod, GetX, or Bloc, installs the matching package, and generates a starter state file.*
+> *The CLI asks you to choose Provider, Riverpod, GetX, or Bloc, installs the matching package, and generates a starter state file when needed. Clean Architecture with GetX uses the manager controller instead of a separate state file.*
 
 #### MVVM Architecture
 ```bash

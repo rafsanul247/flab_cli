@@ -383,11 +383,14 @@ Future<void> _handleFeatureCreation(
   }
 
   await _installStateManagementDependency(stateManagement);
-  _createFile(
-    path.join('lib', 'features', snakeName, 'presentation', 'state',
-        '${snakeName}_$stateManagement.dart'),
-    Templates.getStateManagementContent(pascalName, snakeName, stateManagement),
-  );
+  if (!(arch == 'Clean Architecture' && stateManagement == 'getx')) {
+    _createFile(
+      path.join('lib', 'features', snakeName, 'presentation', 'state',
+          '${snakeName}_$stateManagement.dart'),
+      Templates.getStateManagementContent(
+          pascalName, snakeName, stateManagement),
+    );
+  }
 
   _logger
       .success('⚡ Feature "$featureName" generated successfully with $arch!');

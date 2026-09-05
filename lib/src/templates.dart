@@ -1301,14 +1301,14 @@ class ${pascalName}DataSourceImplement implements ${pascalName}DataSource {
   static String getEntityContent(String pascalName) => '''
 class ${pascalName}Entity {
   // TODO: Define entity properties here
-  // final String? id;
-  // final String? name;
+  // final String name;
+  // final String email;
 
   const ${pascalName}Entity(
     // TODO: Pass entity properties to constructor
     // {
-    //   this.id,
-    //   this.name,
+    //   required this.name,
+    //   required this.email,
     // }
   );
 }
@@ -1320,27 +1320,27 @@ class ${pascalName}Entity {
 import '../../domain/entities/${entitySnake}_entity.dart';
 
 class ${pascalName}Model extends ${pascalName}Entity {
-  const ${pascalName}Model(
+  ${pascalName}Model(
     // TODO: Pass entity properties to super constructor
     // {
-    //   required super.id,
-    //   required super.title,
+    //   required super.name,
+    //   required super.email,
     // }
   );
 
   // TODO: Convert JSON to Model
   // factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
   //   return ${pascalName}Model(
-  //     id: json['id'] as String?,
-  //     title: json['title'] as String?,
+  //     name: json['name'] as String? ?? '',
+  //     email: json['email'] as String? ?? '',
   //   );
   // }
 
   // TODO: Convert Model to JSON
   // Map<String, dynamic> toJson() {
   //   return {
-  //     'id': id,
-  //     'title': title,
+  //     'name': name,
+  //     'email': email,
   //   };
   // }
 }
@@ -1430,12 +1430,41 @@ class ${pascalName}UseCase {
 ''';
 
   static String getControllerContent(String pascalName, String snakeName) => '''
+import 'package:get/get.dart';
+import '../../../domain/entities/${snakeName}_entity.dart';
 import '../../../domain/usecases/${snakeName}_usecase.dart';
 
-class ${pascalName}Controller {
+class ${pascalName}Controller extends GetxController {
   final ${pascalName}UseCase useCase;
 
   ${pascalName}Controller(this.useCase);
+
+  // TODO: Add your observable variables here
+  // var users = <${pascalName}Entity>[].obs;
+  // var isLoading = false.obs;
+  // var errorMessage = ''.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // TODO: Call initial methods here
+    // fetchData();
+  }
+
+  // TODO: Add your controller methods here
+  // Future<void> fetchData() async {
+  //   isLoading.value = true;
+  //   errorMessage.value = '';
+  //
+  //   final result = await useCase.getUsers(); // Update method name as needed
+  //
+  //   result.fold(
+  //     (failure) => errorMessage.value = failure.message,
+  //     (data) => items.value = data,
+  //   );
+  //
+  //   isLoading.value = false;
+  // }
 }
 ''';
 

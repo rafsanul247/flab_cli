@@ -9,7 +9,8 @@ void main() {
       final content = Templates.getEntityContent('Home');
       expect(content, contains('class HomeEntity {'));
       expect(content, contains('// TODO: Define entity properties here'));
-      expect(content, contains('// final String? id;'));
+      expect(content, contains('// final String name;'));
+      expect(content, contains('// final String email;'));
       expect(content, contains('const HomeEntity('));
       expect(
           content, contains('// TODO: Pass entity properties to constructor'));
@@ -21,7 +22,7 @@ void main() {
       expect(content,
           contains("import '../../domain/entities/home_entity.dart';"));
       expect(content, contains('class HomeModel extends HomeEntity {'));
-      expect(content, contains('const HomeModel('));
+      expect(content, contains('HomeModel('));
       expect(content,
           contains('// TODO: Pass entity properties to super constructor'));
       expect(
@@ -106,6 +107,21 @@ void main() {
         );
         expect(entityFile.existsSync(), isTrue);
         expect(entityFile.readAsStringSync(), contains('class HomeEntity'));
+
+        final controllerFile = File(path.join(
+            tempDir.path,
+            'lib',
+            'features',
+            'home',
+            'presentation',
+            'manager',
+            'controller',
+            'home_controller.dart'));
+        expect(controllerFile.existsSync(), isTrue);
+
+        final getxStateFile = File(path.join(tempDir.path, 'lib', 'features',
+            'home', 'presentation', 'state', 'home_getx.dart'));
+        expect(getxStateFile.existsSync(), isFalse);
 
         // Verify data/models/home_model.dart exists and extends entity
         final modelFile = File(
