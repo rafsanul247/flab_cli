@@ -7,13 +7,13 @@ void main() {
   print('   \$ flab init my_awesome_app\n');
 
   // 2. Scaffold Feature Modules
-  print('2. Scaffold Clean Architecture feature:');
-  print('   \$ flab auth --clean\n');
+  print('2. Scaffold Clean Architecture with default GetX:');
+  print('   \$ flab auth\n');
 
-  print('3. Scaffold MVVM feature:');
+  print('3. Scaffold MVVM and choose state management:');
   print('   \$ flab profile --mvvm\n');
 
-  // 3. Inject Specific Component
+  // 4. Inject Specific Component
   print('4. Inject a custom UseCase:');
   print('   \$ flab auth -u LoginUser\n');
 

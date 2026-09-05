@@ -73,7 +73,7 @@ Check if the CLI is accessible from your terminal:
 
 ```bash
 flab --version
-# Output: FLAB CLI Version: 1.0.0
+# Output: FLAB CLI Version: 1.0.3
 
 flab --help
 ```
@@ -111,12 +111,20 @@ cd existing_flutter_project
 flab init
 ```
 
-### 3. Generate a Clean Architecture Feature
+### 3. Generate Features
 
-Generate a feature with automated dependency injection:
+Generate a Clean Architecture feature with the default GetX state management:
+
+```bash
+flab authentication
+```
+
+To choose Provider, Riverpod, GetX, or Bloc interactively:
 
 ```bash
 flab authentication --clean
+flab profile --mvvm
+flab dashboard --mvc
 ```
 
 ---
@@ -173,7 +181,7 @@ my_app/
 
 ### Clean Architecture Feature Structure
 
-When running `flab <feature_name> --clean`:
+When running `flab <feature_name>` or `flab <feature_name> --clean`:
 
 ```
 lib/features/<feature_name>/
@@ -195,9 +203,11 @@ lib/features/<feature_name>/
     ├── manager/
     │   └── controller/
     │       └── <feature_name>_controller.dart      # Feature controller/state holder
-    └── views/
+    ├── views/
         ├── widgets/                                # Feature-specific widgets
         └── <feature_name>_screen.dart              # UI view screen
+    └── state/
+      └── <feature_name>_<state_management>.dart  # Provider, Riverpod, GetX, or Bloc starter
 ```
 
 ---
@@ -338,6 +348,10 @@ Projects created or configured with `flab` come pre-equipped with industry stand
 | [`flutter_screenutil`](https://pub.dev/packages/flutter_screenutil) | Responsive UI adaptation and text scaling |
 | [`google_fonts`](https://pub.dev/packages/google_fonts) | Modern typography and font management |
 | [`connectivity_plus`](https://pub.dev/packages/connectivity_plus) | Network connectivity monitoring |
+| [`get`](https://pub.dev/packages/get) | Default GetX state management for features |
+| [`provider`](https://pub.dev/packages/provider) | Optional state management selected during scaffolding |
+| [`flutter_riverpod`](https://pub.dev/packages/flutter_riverpod) | Optional state management selected during scaffolding |
+| [`flutter_bloc`](https://pub.dev/packages/flutter_bloc) | Optional state management selected during scaffolding |
 
 ---
 
@@ -346,9 +360,10 @@ Projects created or configured with `flab` come pre-equipped with industry stand
 | Command | Arguments / Flags | Description |
 |---|---|---|
 | `flab init` | `[appName]` | Initialize new or configure current Flutter project |
-| `flab <feature>` | `--clean` | Scaffold feature with Clean Architecture & auto DI |
-| `flab <feature>` | `--mvvm` | Scaffold feature with MVVM architecture |
-| `flab <feature>` | `--mvc` | Scaffold feature with MVC architecture |
+| `flab <feature>` | — | Clean Architecture with GetX by default |
+| `flab <feature>` | `--clean` | Clean Architecture with interactive state-management selection |
+| `flab <feature>` | `--mvvm` | MVVM with interactive state-management selection |
+| `flab <feature>` | `--mvc` | MVC with interactive state-management selection |
 | `flab <feature>` | `-u, --usecase <Name>` | Generate a dedicated UseCase file |
 | `flab <feature>` | `-m, --model <Name>` | Generate Model and Entity files |
 | `flab list` | — | List all existing features |

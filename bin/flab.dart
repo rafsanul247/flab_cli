@@ -20,7 +20,7 @@ Future<void> main(List<String> arguments) async {
   if (arguments.first == 'version' ||
       arguments.contains('--version') ||
       arguments.contains('-v')) {
-    _logger.info('FLAB CLI Version: 1.0.0');
+    _logger.info('FLAB CLI Version: 1.0.3');
     return;
   }
 
@@ -53,7 +53,7 @@ Future<void> main(List<String> arguments) async {
   }
 
   if (results['version'] as bool) {
-    _logger.info('FLAB CLI Version: 1.0.0');
+    _logger.info('FLAB CLI Version: 1.0.3');
     return;
   }
 
@@ -157,7 +157,8 @@ Future<void> _handleInit(String? appName) async {
 Future<void> _createNewFlutterProject(String validAppName) async {
   final targetDir = Directory(path.join(Directory.current.path, validAppName));
   if (targetDir.existsSync()) {
-    _logger.err('Directory "$validAppName" already exists! Please choose another name or remove the existing directory.');
+    _logger.err(
+        'Directory "$validAppName" already exists! Please choose another name or remove the existing directory.');
     return;
   }
 
@@ -198,7 +199,8 @@ Future<void> _createNewFlutterProject(String validAppName) async {
 }
 
 Future<void> _installDependencies() async {
-  _logger.info('📦 Installing Dio, Dartz, Hive, GetIt, GoRouter, Google Fonts...');
+  _logger
+      .info('📦 Installing Dio, Dartz, Hive, GetIt, GoRouter, Google Fonts...');
   final process = await Process.run(
     'flutter',
     [
@@ -229,7 +231,8 @@ Future<void> _installDependencies() async {
 // FEATURE & SCAFFOLDING LOGIC
 // ─────────────────────────────────────────────────────────────
 
-Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async {
+Future<void> _handleFeatureCreation(
+    String featureName, ArgResults flags) async {
   final pubspec = File('pubspec.yaml');
   if (!pubspec.existsSync()) {
     _logger.err('No Flutter project found here! Run "flab init" first.');
@@ -242,10 +245,12 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
   // Check sub-component generation flags
   if (flags['usecase'] != null) {
     _createFile(
-      path.join('lib', 'features', snakeName, 'domain', 'usecases', '${flags['usecase']}_usecase.dart'),
+      path.join('lib', 'features', snakeName, 'domain', 'usecases',
+          '${flags['usecase']}_usecase.dart'),
       '// UseCase: ${flags['usecase']}',
     );
-    _logger.success('UseCase "${flags['usecase']}" generated under $featureName');
+    _logger
+        .success('UseCase "${flags['usecase']}" generated under $featureName');
     return;
   }
 
@@ -254,11 +259,13 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
     final modelSnake = modelRaw.toLowerCase();
     final modelPascal = _toPascalCase(modelSnake);
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'models', '${modelSnake}_model.dart'),
+      path.join('lib', 'features', snakeName, 'data', 'models',
+          '${modelSnake}_model.dart'),
       Templates.getModelContent(modelPascal, modelSnake),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'domain', 'entities', '${modelSnake}_entity.dart'),
+      path.join('lib', 'features', snakeName, 'domain', 'entities',
+          '${modelSnake}_entity.dart'),
       Templates.getEntityContent(modelPascal),
     );
     _logger.success('Model & Entity "$modelRaw" generated under $featureName');
@@ -270,7 +277,8 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
     final dsSnake = dsRaw.toLowerCase();
     final dsPascal = _toPascalCase(dsSnake);
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'data_sources', '${dsSnake}_data_source.dart'),
+      path.join('lib', 'features', snakeName, 'data', 'data_sources',
+          '${dsSnake}_data_source.dart'),
       Templates.getDataSourceContent(dsPascal, snakeName),
     );
     _logger.success('DataSource "$dsRaw" generated under $featureName');
@@ -278,7 +286,8 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
   }
 
   if (!_isValidFeatureName(snakeName)) {
-    _logger.err('Invalid feature name "$featureName". Use lowercase letters, numbers, and underscores only.');
+    _logger.err(
+        'Invalid feature name "$featureName". Use lowercase letters, numbers, and underscores only.');
     return;
   }
 
@@ -294,7 +303,8 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
 
   // Base Screen Generation
   _createFile(
-    path.join('lib', 'features', snakeName, 'presentation', 'views', '${snakeName}_screen.dart'),
+    path.join('lib', 'features', snakeName, 'presentation', 'views',
+        '${snakeName}_screen.dart'),
     Templates.getScreenContent(pascalName),
   );
   Directory(
@@ -303,68 +313,84 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
 
   final shouldChooseStateManagement =
       flags['clean'] as bool || flags['mvvm'] as bool || flags['mvc'] as bool;
-  final stateManagement = shouldChooseStateManagement
-      ? _chooseStateManagement()
-      : 'getx';
+  final stateManagement =
+      shouldChooseStateManagement ? _chooseStateManagement() : 'getx';
 
   if (arch == 'Clean Architecture') {
     // 1. Data Layer
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'data_sources', '${snakeName}_data_source.dart'),
+      path.join('lib', 'features', snakeName, 'data', 'data_sources',
+          '${snakeName}_data_source.dart'),
       Templates.getDataSourceContent(pascalName, snakeName),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'models', '${snakeName}_model.dart'),
+      path.join('lib', 'features', snakeName, 'data', 'models',
+          '${snakeName}_model.dart'),
       Templates.getModelContent(pascalName, snakeName),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'repositories', '${snakeName}_repository_implement.dart'),
+      path.join('lib', 'features', snakeName, 'data', 'repositories',
+          '${snakeName}_repository_implement.dart'),
       Templates.getRepoImplContent(pascalName, snakeName),
     );
 
     // 2. Domain Layer
     _createFile(
-      path.join('lib', 'features', snakeName, 'domain', 'entities', '${snakeName}_entity.dart'),
+      path.join('lib', 'features', snakeName, 'domain', 'entities',
+          '${snakeName}_entity.dart'),
       Templates.getEntityContent(pascalName),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'domain', 'repositories', '${snakeName}_repository.dart'),
+      path.join('lib', 'features', snakeName, 'domain', 'repositories',
+          '${snakeName}_repository.dart'),
       Templates.getRepoContent(pascalName, snakeName),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'domain', 'usecases', '${snakeName}_usecase.dart'),
+      path.join('lib', 'features', snakeName, 'domain', 'usecases',
+          '${snakeName}_usecase.dart'),
       Templates.getUseCaseContent(pascalName, snakeName),
     );
 
     // 3. Presentation Controller
     _createFile(
-      path.join('lib', 'features', snakeName, 'presentation', 'manager', 'controller', '${snakeName}_controller.dart'),
+      path.join('lib', 'features', snakeName, 'presentation', 'manager',
+          'controller', '${snakeName}_controller.dart'),
       Templates.getControllerContent(pascalName, snakeName),
     );
 
     // 4. Dependency Injection
     _addFeatureToInjection(snakeName, pascalName);
   } else if (arch == 'MVVM') {
-    _createFile(path.join('lib', 'features', snakeName, 'viewmodels', '${snakeName}_viewmodel.dart'), '// ViewModel');
-    _createFile(path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'), '// Model');
+    _createFile(
+        path.join('lib', 'features', snakeName, 'viewmodels',
+            '${snakeName}_viewmodel.dart'),
+        '// ViewModel');
+    _createFile(
+        path.join(
+            'lib', 'features', snakeName, 'models', '${snakeName}_model.dart'),
+        '// Model');
   } else if (arch == 'MVC') {
     _createFile(
-      path.join('lib', 'features', snakeName, 'controllers', '${snakeName}_controller.dart'),
+      path.join('lib', 'features', snakeName, 'controllers',
+          '${snakeName}_controller.dart'),
       Templates.getMvcControllerContent(pascalName, snakeName),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'),
+      path.join(
+          'lib', 'features', snakeName, 'models', '${snakeName}_model.dart'),
       Templates.getMvcModelContent(pascalName),
     );
   }
 
   await _installStateManagementDependency(stateManagement);
   _createFile(
-    path.join('lib', 'features', snakeName, 'presentation', 'state', '${snakeName}_$stateManagement.dart'),
+    path.join('lib', 'features', snakeName, 'presentation', 'state',
+        '${snakeName}_$stateManagement.dart'),
     Templates.getStateManagementContent(pascalName, snakeName, stateManagement),
   );
 
-  _logger.success('⚡ Feature "$featureName" generated successfully with $arch!');
+  _logger
+      .success('⚡ Feature "$featureName" generated successfully with $arch!');
 }
 
 String _chooseStateManagement() {
@@ -417,23 +443,52 @@ Future<void> _handleConfig(List<String> args) async {
 
   switch (target) {
     case 'theme':
-      _createFile(path.join('lib', 'core', 'constants', 'colors.dart'), Templates.colorsContent);
-      _createFile(path.join('lib', 'core', 'constants', 'sizes.dart'), Templates.sizesContent);
-      _createFile(path.join('lib', 'core', 'constants', 'texts.dart'), Templates.textsContent);
-      _createFile(path.join('lib', 'core', 'theme', 'app_theme.dart'), Templates.appThemeContent);
-      _createFile(path.join('lib', 'core', 'theme', 'text_theme.dart'), Templates.textThemeContent);
+      _createFile(path.join('lib', 'core', 'constants', 'colors.dart'),
+          Templates.colorsContent);
+      _createFile(path.join('lib', 'core', 'constants', 'sizes.dart'),
+          Templates.sizesContent);
+      _createFile(path.join('lib', 'core', 'constants', 'texts.dart'),
+          Templates.textsContent);
+      _createFile(path.join('lib', 'core', 'theme', 'app_theme.dart'),
+          Templates.appThemeContent);
+      _createFile(path.join('lib', 'core', 'theme', 'text_theme.dart'),
+          Templates.textThemeContent);
 
-      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'appbar_theme.dart'), Templates.appBarThemeContent);
-      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'botton_sheet_theme.dart'), Templates.bottomSheetThemeContent);
-      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'checkbox_theme.dart'), Templates.checkboxThemeContent);
-      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'chip_theme.dart'), Templates.chipThemeContent);
-      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'elevated_button_theme.dart'), Templates.elevatedButtonThemeContent);
-      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'outlined_button_theme.dart'), Templates.outlinedButtonThemeContent);
-      _createFile(path.join('lib', 'core', 'theme', 'widgets_theme', 'text_field_theme.dart'), Templates.textFieldThemeContent);
+      _createFile(
+          path.join(
+              'lib', 'core', 'theme', 'widgets_theme', 'appbar_theme.dart'),
+          Templates.appBarThemeContent);
+      _createFile(
+          path.join('lib', 'core', 'theme', 'widgets_theme',
+              'botton_sheet_theme.dart'),
+          Templates.bottomSheetThemeContent);
+      _createFile(
+          path.join(
+              'lib', 'core', 'theme', 'widgets_theme', 'checkbox_theme.dart'),
+          Templates.checkboxThemeContent);
+      _createFile(
+          path.join('lib', 'core', 'theme', 'widgets_theme', 'chip_theme.dart'),
+          Templates.chipThemeContent);
+      _createFile(
+          path.join('lib', 'core', 'theme', 'widgets_theme',
+              'elevated_button_theme.dart'),
+          Templates.elevatedButtonThemeContent);
+      _createFile(
+          path.join('lib', 'core', 'theme', 'widgets_theme',
+              'outlined_button_theme.dart'),
+          Templates.outlinedButtonThemeContent);
+      _createFile(
+          path.join(
+              'lib', 'core', 'theme', 'widgets_theme', 'text_field_theme.dart'),
+          Templates.textFieldThemeContent);
 
-      _createFile(path.join('lib', 'core', 'routes', 'app_router.dart'), Templates.appRouterContent);
-      _createFile(path.join('lib', 'core', 'helpers', 'device_helpers.dart'), Templates.deviceHelpersContent);
-      _createFile(path.join('lib', 'core', 'extensions', 'context_extension.dart'), Templates.contextExtensionContent);
+      _createFile(path.join('lib', 'core', 'routes', 'app_router.dart'),
+          Templates.appRouterContent);
+      _createFile(path.join('lib', 'core', 'helpers', 'device_helpers.dart'),
+          Templates.deviceHelpersContent);
+      _createFile(
+          path.join('lib', 'core', 'extensions', 'context_extension.dart'),
+          Templates.contextExtensionContent);
 
       _logger.success('🎨 Theme system & core routing created successfully!');
       break;
@@ -446,17 +501,24 @@ Future<void> _handleConfig(List<String> args) async {
       break;
 
     case 'backend':
-      _createFile(path.join('lib', 'core', 'network', 'dio_client.dart'), Templates.dioClientContent);
-      _createFile(path.join('lib', 'core', 'network', 'network_info.dart'), Templates.networkInfoContent);
-      _createFile(path.join('lib', 'core', 'services', 'hive_service.dart'), Templates.hiveStorageContent);
-      _createFile(path.join('lib', 'core', 'error', 'failures.dart'), Templates.failuresContent);
-      _createFile(path.join('lib', 'injection.dart'), Templates.dependencyInjectionContent);
+      _createFile(path.join('lib', 'core', 'network', 'dio_client.dart'),
+          Templates.dioClientContent);
+      _createFile(path.join('lib', 'core', 'network', 'network_info.dart'),
+          Templates.networkInfoContent);
+      _createFile(path.join('lib', 'core', 'services', 'hive_service.dart'),
+          Templates.hiveStorageContent);
+      _createFile(path.join('lib', 'core', 'error', 'failures.dart'),
+          Templates.failuresContent);
+      _createFile(path.join('lib', 'injection.dart'),
+          Templates.dependencyInjectionContent);
       _logger.success('⚡ Backend (Dio, Hive, DI, Failures) setup completed!');
       break;
 
     case 'utils':
-      _createFile(path.join('lib', 'core', 'utils', 'api_endpoint.dart'), Templates.apiEndpointContent);
-      _createFile(path.join('lib', 'core', 'utils', 'app_logger.dart'), Templates.appLoggerContent);
+      _createFile(path.join('lib', 'core', 'utils', 'api_endpoint.dart'),
+          Templates.apiEndpointContent);
+      _createFile(path.join('lib', 'core', 'utils', 'app_logger.dart'),
+          Templates.appLoggerContent);
       _logger.success('⚡ Utils setup completed!');
       break;
 
@@ -496,7 +558,8 @@ void _cleanAndConfigurePubspec() {
 
   // 2. Read and filter out comment lines
   final lines = file.readAsLinesSync();
-  final cleanedLines = lines.where((line) => !line.trim().startsWith('#')).toList();
+  final cleanedLines =
+      lines.where((line) => !line.trim().startsWith('#')).toList();
 
   // 3. Remove existing root-level 'flutter:' section to avoid duplication
   final filteredLines = <String>[];
@@ -510,7 +573,9 @@ void _cleanAndConfigurePubspec() {
 
     // Skip indented properties that belong to the old root flutter section
     if (inFlutterSection) {
-      if (line.startsWith(' ') || line.startsWith('\t') || line.trim().isEmpty) {
+      if (line.startsWith(' ') ||
+          line.startsWith('\t') ||
+          line.trim().isEmpty) {
         continue;
       } else {
         inFlutterSection = false;
@@ -552,7 +617,11 @@ String _getAppName() {
     for (final line in lines) {
       final trimmed = line.trim();
       if (trimmed.startsWith('name:')) {
-        return trimmed.substring(5).replaceAll("'", '').replaceAll('"', '').trim();
+        return trimmed
+            .substring(5)
+            .replaceAll("'", '')
+            .replaceAll('"', '')
+            .trim();
       }
     }
   }
@@ -563,7 +632,8 @@ void _fixWidgetTest([String? appName]) {
   final widgetTestFile = File(path.join('test', 'widget_test.dart'));
   if (!widgetTestFile.existsSync()) return;
 
-  final effectiveAppName = (appName != null && appName.isNotEmpty) ? appName : _getAppName();
+  final effectiveAppName =
+      (appName != null && appName.isNotEmpty) ? appName : _getAppName();
   if (effectiveAppName.isEmpty) return;
 
   final content = widgetTestFile.readAsStringSync();
@@ -600,16 +670,19 @@ void _addFeatureToInjection(String snakeName, String pascalName) {
     "import 'features/$snakeName/presentation/manager/controller/${snakeName}_controller.dart';",
   ];
 
-  final importsToAdd = featureImports.where((imp) => !content.contains(imp)).toList();
+  final importsToAdd =
+      featureImports.where((imp) => !content.contains(imp)).toList();
 
   if (importsToAdd.isNotEmpty) {
-    final lastImportMatch = RegExp(r"""^import\s+['"][^'"]*['"];""", multiLine: true)
-        .allMatches(content)
-        .lastOrNull;
+    final lastImportMatch =
+        RegExp(r"""^import\s+['"][^'"]*['"];""", multiLine: true)
+            .allMatches(content)
+            .lastOrNull;
 
     if (lastImportMatch != null) {
       final insertPos = lastImportMatch.end;
-      content = '${content.substring(0, insertPos)}\n\n${importsToAdd.join('\n')}${content.substring(insertPos)}';
+      content =
+          '${content.substring(0, insertPos)}\n\n${importsToAdd.join('\n')}${content.substring(insertPos)}';
     } else {
       content = '${importsToAdd.join('\n')}\n\n$content';
     }
@@ -617,36 +690,45 @@ void _addFeatureToInjection(String snakeName, String pascalName) {
 
   // Ensure _setUpCore is defined and called
   if (!content.contains('_setUpCore()')) {
-    final initMatch = RegExp(r"(Future<void>\s+(?:init|initDependencies)\s*\(\)\s*async\s*\{)([\s\S]*?)(\})").firstMatch(content);
+    final initMatch = RegExp(
+            r"(Future<void>\s+(?:init|initDependencies)\s*\(\)\s*async\s*\{)([\s\S]*?)(\})")
+        .firstMatch(content);
     if (initMatch != null) {
       final beforeBrace = initMatch.group(1)!;
       final body = initMatch.group(2)!;
       final newBody = '\n  _setUpCore();$body';
-      content = '${content.substring(0, initMatch.start + beforeBrace.length)}$newBody${content.substring(initMatch.end - 1)}';
+      content =
+          '${content.substring(0, initMatch.start + beforeBrace.length)}$newBody${content.substring(initMatch.end - 1)}';
     }
   }
   if (!content.contains('void _setUpCore()')) {
-    final dioClientFile = File(path.join('lib', 'core', 'network', 'dio_client.dart'));
+    final dioClientFile =
+        File(path.join('lib', 'core', 'network', 'dio_client.dart'));
     if (dioClientFile.existsSync()) {
       if (!content.contains("core/network/dio_client.dart")) {
         content = "import 'core/network/dio_client.dart';\n$content";
       }
-      content = '${content.trimRight()}\n\n// Core: Shared resources for all features\nvoid _setUpCore() {\n  sl.registerLazySingleton<DioClient>(() => DioClient());\n  sl.registerLazySingleton<Dio>(() => sl<DioClient>().dio);\n}\n';
+      content =
+          '${content.trimRight()}\n\n// Core: Shared resources for all features\nvoid _setUpCore() {\n  sl.registerLazySingleton<DioClient>(() => DioClient());\n  sl.registerLazySingleton<Dio>(() => sl<DioClient>().dio);\n}\n';
     } else {
-      content = '${content.trimRight()}\n\n// Core: Shared resources for all features\nvoid _setUpCore() {\n  sl.registerLazySingleton<Dio>(() => Dio());\n}\n';
+      content =
+          '${content.trimRight()}\n\n// Core: Shared resources for all features\nvoid _setUpCore() {\n  sl.registerLazySingleton<Dio>(() => Dio());\n}\n';
     }
   }
 
   // 2. Add `await _setUp<PascalName>();` inside init()
   final setupCall = 'await _setUp$pascalName();';
   if (!content.contains(setupCall)) {
-    final initMatch = RegExp(r"(Future<void>\s+(?:init|initDependencies)\s*\(\)\s*async\s*\{)([\s\S]*?)(\})").firstMatch(content);
+    final initMatch = RegExp(
+            r"(Future<void>\s+(?:init|initDependencies)\s*\(\)\s*async\s*\{)([\s\S]*?)(\})")
+        .firstMatch(content);
     if (initMatch != null) {
       final beforeBrace = initMatch.group(1)!;
       final body = initMatch.group(2)!;
       if (!body.contains('_setUp$pascalName')) {
         final newBody = '${body.trimRight()}\n  $setupCall\n';
-        content = '${content.substring(0, initMatch.start + beforeBrace.length)}$newBody${content.substring(initMatch.end - 1)}';
+        content =
+            '${content.substring(0, initMatch.start + beforeBrace.length)}$newBody${content.substring(initMatch.end - 1)}';
       }
     }
   }
@@ -697,7 +779,8 @@ void _removeFeatureFromInjection(String snakeName, String pascalName) {
   final lines = content.split('\n');
   final filteredLines = <String>[];
   for (final line in lines) {
-    if (line.trim().startsWith('import') && line.contains('features/$snakeName/')) {
+    if (line.trim().startsWith('import') &&
+        line.contains('features/$snakeName/')) {
       continue;
     }
     if (line.contains('_setUp$pascalName()')) {
@@ -820,7 +903,8 @@ void _printDirectory(Directory dir, String indent) {
     final entity = entities[i];
     final isLast = i == entities.length - 1;
     final prefix = isLast ? '└── ' : '├── ';
-    _logger.info('$indent$prefix${entity.path.split(Platform.pathSeparator).last}');
+    _logger.info(
+        '$indent$prefix${entity.path.split(Platform.pathSeparator).last}');
     if (entity is Directory) {
       _printDirectory(entity, '$indent${isLast ? "    " : "│   "}');
     }
@@ -838,7 +922,7 @@ void _printHelp() {
 │             ██║     ███████╗ ██║  ██║ ██████╔╝              │
 │             ╚═╝     ╚══════╝ ╚═╝  ╚═╝ ╚═════╝               │
 │                                                             │
-│   Flutter Architecture & Utility CLI Tool (FLAB) v1.0.0     │
+│   Flutter Architecture & Utility CLI Tool (FLAB) v1.0.3     │
 │   Developed by : Rafsanul Rifat                             │
 │   GitHub   : https://github.com/rafsanul247/flab_cli        │
 │                                                             │

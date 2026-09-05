@@ -29,7 +29,10 @@ flab init
 
 ### 3. Generate Features
 ```bash
-# Clean Architecture (Default with GetIt DI)
+# Clean Architecture with default GetX state management
+flab auth
+
+# Choose Provider, Riverpod, GetX, or Bloc interactively
 flab auth --clean
 
 # MVVM Architecture
