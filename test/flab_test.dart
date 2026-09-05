@@ -35,6 +35,17 @@ void main() {
       expect(content, contains('// TODO: Implement Data Source methods'));
     });
 
+    test('Templates.getUseCaseContent generates the use case template', () {
+      final content = Templates.getUseCaseContent('Home', 'home');
+      expect(content, contains("import 'package:dartz/dartz.dart';"));
+      expect(content, contains("import '../../../../core/error/failures.dart';"));
+      expect(content, contains("import '../entities/home_entity.dart';"));
+      expect(content, contains("import '../repositories/home_repository.dart';"));
+      expect(content, contains('class HomeUseCase'));
+      expect(content, contains('final HomeRepository repository;'));
+      expect(content, contains('Future<Either<Failure, List<HomeEntity>>> getUsers() async'));
+    });
+
     test('flab creates entities template and widgets directory', () async {
       final tempDir = await Directory.systemTemp.createTemp('flab_test_');
       try {

@@ -1412,12 +1412,20 @@ abstract class ${pascalName}Repository {
   }
 
   static String getUseCaseContent(String pascalName, String snakeName) => '''
+import 'package:dartz/dartz.dart';
+import '../../../../core/error/failures.dart';
+import '../entities/${snakeName}_entity.dart';
 import '../repositories/${snakeName}_repository.dart';
 
 class ${pascalName}UseCase {
   final ${pascalName}Repository repository;
 
   ${pascalName}UseCase({required this.repository});
+
+  // TODO: Define UseCase methods here
+  // Future<Either<Failure, List<${pascalName}Entity>>> getUsers() async {
+  //   return await repository.getUsers();
+  // }
 }
 ''';
 
