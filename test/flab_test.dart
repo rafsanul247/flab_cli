@@ -46,6 +46,22 @@ void main() {
       expect(content, contains('Future<Either<Failure, List<HomeEntity>>> getUsers() async'));
     });
 
+    test('Templates generate selected state management and MVC files', () {
+      final getx = Templates.getStateManagementContent('Home', 'home', 'getx');
+      final provider = Templates.getStateManagementContent('Home', 'home', 'provider');
+      final riverpod = Templates.getStateManagementContent('Home', 'home', 'riverpod');
+      final bloc = Templates.getStateManagementContent('Home', 'home', 'bloc');
+      final mvcModel = Templates.getMvcModelContent('Home');
+      final mvcController = Templates.getMvcControllerContent('Home', 'home');
+
+      expect(getx, contains("import 'package:get/get.dart';"));
+      expect(provider, contains('extends ChangeNotifier'));
+      expect(riverpod, contains('NotifierProvider'));
+      expect(bloc, contains('extends Cubit<bool>'));
+      expect(mvcModel, contains('class HomeModel'));
+      expect(mvcController, contains("import '../models/home_model.dart';"));
+    });
+
     test('flab creates entities template and widgets directory', () async {
       final tempDir = await Directory.systemTemp.createTemp('flab_test_');
       try {

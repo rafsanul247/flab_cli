@@ -1439,6 +1439,69 @@ class ${pascalName}Controller {
 }
 ''';
 
+  static String getStateManagementContent(
+    String pascalName,
+    String snakeName,
+    String stateManagement,
+  ) {
+    switch (stateManagement) {
+      case 'provider':
+        return '''
+import 'package:flutter/foundation.dart';
+
+class ${pascalName}Provider extends ChangeNotifier {
+  bool isLoading = false;
+}
+''';
+      case 'riverpod':
+        return '''
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final ${snakeName}Provider = NotifierProvider<${pascalName}Notifier, bool>(
+  ${pascalName}Notifier.new,
+);
+
+class ${pascalName}Notifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+}
+''';
+      case 'bloc':
+        return '''
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class ${pascalName}Cubit extends Cubit<bool> {
+  ${pascalName}Cubit() : super(false);
+}
+''';
+      case 'getx':
+      default:
+        return '''
+import 'package:get/get.dart';
+
+class ${pascalName}Controller extends GetxController {
+  final isLoading = false.obs;
+}
+''';
+    }
+  }
+
+  static String getMvcModelContent(String pascalName) => '''
+class ${pascalName}Model {
+  // TODO: Add model properties here.
+}
+''';
+
+  static String getMvcControllerContent(String pascalName, String snakeName) => '''
+import '../models/${snakeName}_model.dart';
+
+class ${pascalName}Controller {
+  final ${pascalName}Model model;
+
+  ${pascalName}Controller({required this.model});
+}
+''';
+
   static String getScreenContent(String pascalName) => '''
 import 'package:flutter/material.dart';
 

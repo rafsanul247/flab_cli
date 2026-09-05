@@ -102,7 +102,7 @@ Future<void> main(List<String> arguments) async {
   }
 
   // Feature Scaffolding Entrypoint
-  _handleFeatureCreation(command, results);
+  await _handleFeatureCreation(command, results);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -229,7 +229,7 @@ Future<void> _installDependencies() async {
 // FEATURE & SCAFFOLDING LOGIC
 // ─────────────────────────────────────────────────────────────
 
-void _handleFeatureCreation(String featureName, ArgResults flags) {
+Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async {
   final pubspec = File('pubspec.yaml');
   if (!pubspec.existsSync()) {
     _logger.err('No Flutter project found here! Run "flab init" first.');
@@ -277,10 +277,20 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
     return;
   }
 
+  if (!_isValidFeatureName(snakeName)) {
+    _logger.err('Invalid feature name "$featureName". Use lowercase letters, numbers, and underscores only.');
+    return;
+  }
+
   // Standard Architecture check via options
   String arch = 'Clean Architecture';
   if (flags['mvc'] as bool) arch = 'MVC';
   if (flags['mvvm'] as bool) arch = 'MVVM';
+
+  if (flags['mvc'] as bool && flags['mvvm'] as bool) {
+    _logger.err('Choose only one architecture: --mvc or --mvvm.');
+    return;
+  }
 
   // Base Screen Generation
   _createFile(
@@ -326,17 +336,72 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
       Templates.getControllerContent(pascalName, snakeName),
     );
 
+    final stateManagement = flags['clean'] as bool
+        ? _chooseStateManagement()
+        : 'getx';
+    await _installStateManagementDependency(stateManagement);
+    _createFile(
+      path.join('lib', 'features', snakeName, 'presentation', 'state', '${snakeName}_$stateManagement.dart'),
+      Templates.getStateManagementContent(pascalName, snakeName, stateManagement),
+    );
+
     // 4. Dependency Injection
     _addFeatureToInjection(snakeName, pascalName);
   } else if (arch == 'MVVM') {
     _createFile(path.join('lib', 'features', snakeName, 'viewmodels', '${snakeName}_viewmodel.dart'), '// ViewModel');
     _createFile(path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'), '// Model');
   } else if (arch == 'MVC') {
-    _createFile(path.join('lib', 'features', snakeName, 'controllers', '${snakeName}_controller.dart'), '// Controller');
-    _createFile(path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'), '// Model');
+    _createFile(
+      path.join('lib', 'features', snakeName, 'controllers', '${snakeName}_controller.dart'),
+      Templates.getMvcControllerContent(pascalName, snakeName),
+    );
+    _createFile(
+      path.join('lib', 'features', snakeName, 'models', '${snakeName}_model.dart'),
+      Templates.getMvcModelContent(pascalName),
+    );
   }
 
   _logger.success('⚡ Feature "$featureName" generated successfully with $arch!');
+}
+
+String _chooseStateManagement() {
+  const choices = ['provider', 'riverpod', 'getx', 'bloc'];
+  stdout.writeln('Choose state management:');
+  for (var index = 0; index < choices.length; index++) {
+    stdout.writeln('  ${index + 1}. ${choices[index]}');
+  }
+
+  while (true) {
+    stdout.write('Enter choice [1-4]: ');
+    final input = stdin.readLineSync()?.trim();
+    final choice = int.tryParse(input ?? '');
+    if (choice != null && choice >= 1 && choice <= choices.length) {
+      return choices[choice - 1];
+    }
+    _logger.err('Invalid choice. Please enter a number from 1 to 4.');
+  }
+}
+
+Future<void> _installStateManagementDependency(String stateManagement) async {
+  final packages = <String, String>{
+    'provider': 'provider',
+    'riverpod': 'flutter_riverpod',
+    'getx': 'get',
+    'bloc': 'flutter_bloc',
+  };
+  final package = packages[stateManagement]!;
+  _logger.info('📦 Installing $package...');
+  final process = await Process.run(
+    'flutter',
+    ['pub', 'add', package],
+    runInShell: true,
+    workingDirectory: Directory.current.path,
+  );
+  if (process.exitCode == 0) {
+    _logger.success('✅ $package installed successfully!');
+  } else {
+    _logger.err('Failed to install $package: ${process.stderr}');
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -661,6 +726,11 @@ bool _isValidFlutterAppName(String name) {
   return regex.hasMatch(name);
 }
 
+bool _isValidFeatureName(String name) {
+  final RegExp regex = RegExp(r'^[a-z][a-z0-9_]*$');
+  return regex.hasMatch(name);
+}
+
 String _toPascalCase(String text) {
   return text.split(RegExp(r'[_ ]')).map((word) {
     if (word.isEmpty) return '';
@@ -775,7 +845,8 @@ void _printHelp() {
 │  COMMAND                         │  DESCRIPTION                       │
 ├──────────────────────────────────┼────────────────────────────────────┤
 │  ⚡ flab init <appName>           │  # Initialize Flutter project      │
-│  ⚡ flab <Feature> --clean        │  # Scaffold Clean Architecture     │
+│  ⚡ flab <Feature>                │  # Clean Architecture + GetX       │
+│  ⚡ flab <Feature> --clean        │  # Choose state management          │
 │  ⚡ flab <Feature> --mvvm         │  # Scaffold MVVM Architecture      │
 │  ⚡ flab <Feature> -u <UseCase>   │  # Inject custom UseCase           │
 │  ⚡ flab list                     │  # List all created features       │

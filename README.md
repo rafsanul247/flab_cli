@@ -222,13 +222,17 @@ flab init
 
 Scaffold features according to your preferred architectural pattern:
 
-#### Clean Architecture (Default)
+#### Clean Architecture with GetX (Default)
 ```bash
-flab auth --clean
-# or simply:
 flab auth
 ```
-> *Automatically injects Data Source, Repository, UseCase, and Controller into `lib/injection.dart`.*
+> *Generates Clean Architecture layers with a GetX state file and installs the `get` package.*
+
+#### Clean Architecture with Selected State Management
+```bash
+flab auth --clean
+```
+> *The CLI asks you to choose Provider, Riverpod, GetX, or Bloc, installs the matching package, and generates a starter state file.*
 
 #### MVVM Architecture
 ```bash
@@ -240,7 +244,7 @@ Generates `models/`, `viewmodels/`, and `views/`.
 ```bash
 flab dashboard --mvc
 ```
-Generates `models/`, `controllers/`, and `views/`.
+Generates `models/`, `controllers/`, and `views/` with starter MVC model and controller classes.
 
 #### Granular Component Generation
 Generate specific components directly inside a feature:
