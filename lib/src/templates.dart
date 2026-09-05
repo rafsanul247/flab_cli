@@ -442,7 +442,7 @@ class UColors{
 }
 ''';
 
-  static const String sizesContent = ''' 
+  static const String sizesContent = '''
   
 class USizes{
 // Padding and margin sizes
@@ -508,7 +508,7 @@ class USizes{
 }
 ''';
 
-  static const String textsContent = ''' 
+  static const String textsContent = '''
   class UTexts {
   // private Constructor
   UTexts._();
@@ -725,7 +725,6 @@ class UDeviceHelper {
   }
 }
 ''';
-
 
   static const String contextExtensionContent = '''
 import 'package:flutter/material.dart';
@@ -1460,7 +1459,7 @@ class ${pascalName}Controller extends GetxController {
   //
   //   result.fold(
   //     (failure) => errorMessage.value = failure.message,
-  //     (data) => items.value = data,
+  //     (data) => users.value = data,
   //   );
   //
   //   isLoading.value = false;
@@ -1521,7 +1520,8 @@ class ${pascalName}Model {
 }
 ''';
 
-  static String getMvcControllerContent(String pascalName, String snakeName) => '''
+  static String getMvcControllerContent(String pascalName, String snakeName) =>
+      '''
 import '../models/${snakeName}_model.dart';
 
 class ${pascalName}Controller {

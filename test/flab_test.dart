@@ -81,6 +81,14 @@ void main() {
       expect(mvcController, contains("import '../models/home_model.dart';"));
     });
 
+    test('Clean GetX controller template uses GetX', () {
+      final controller = Templates.getControllerContent('Home', 'home');
+
+      expect(controller, contains("import 'package:get/get.dart';"));
+      expect(
+          controller, contains('class HomeController extends GetxController'));
+    });
+
     test('flab creates entities template and widgets directory', () async {
       final tempDir = await Directory.systemTemp.createTemp('flab_test_');
       try {

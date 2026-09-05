@@ -352,14 +352,20 @@ Future<void> _handleFeatureCreation(
     );
 
     // 3. Presentation Controller
-    _createFile(
-      path.join('lib', 'features', snakeName, 'presentation', 'manager',
-          'controller', '${snakeName}_controller.dart'),
-      Templates.getControllerContent(pascalName, snakeName),
-    );
+    if (stateManagement == 'getx') {
+      _createFile(
+        path.join('lib', 'features', snakeName, 'presentation', 'manager',
+            'controller', '${snakeName}_controller.dart'),
+        Templates.getControllerContent(pascalName, snakeName),
+      );
+    }
 
     // 4. Dependency Injection
-    _addFeatureToInjection(snakeName, pascalName);
+    _addFeatureToInjection(
+      snakeName,
+      pascalName,
+      includeController: stateManagement == 'getx',
+    );
   } else if (arch == 'MVVM') {
     _createFile(
         path.join('lib', 'features', snakeName, 'viewmodels',
@@ -647,7 +653,11 @@ void _fixWidgetTest([String? appName]) {
   widgetTestFile.writeAsStringSync(updated);
 }
 
-void _addFeatureToInjection(String snakeName, String pascalName) {
+void _addFeatureToInjection(
+  String snakeName,
+  String pascalName, {
+  bool includeController = true,
+}) {
   final file = File(path.join('lib', 'injection.dart'));
   if (!file.existsSync()) {
     _createFile(file.path, Templates.dependencyInjectionContent);
@@ -670,8 +680,11 @@ void _addFeatureToInjection(String snakeName, String pascalName) {
     "import 'features/$snakeName/data/repositories/${snakeName}_repository_implement.dart';",
     "import 'features/$snakeName/domain/repositories/${snakeName}_repository.dart';",
     "import 'features/$snakeName/domain/usecases/${snakeName}_usecase.dart';",
-    "import 'features/$snakeName/presentation/manager/controller/${snakeName}_controller.dart';",
   ];
+  if (includeController) {
+    featureImports.add(
+        "import 'features/$snakeName/presentation/manager/controller/${snakeName}_controller.dart';");
+  }
 
   final importsToAdd =
       featureImports.where((imp) => !content.contains(imp)).toList();
@@ -739,6 +752,12 @@ void _addFeatureToInjection(String snakeName, String pascalName) {
   // 3. Add `Future<void> _setUp<PascalName>() async { ... }` function
   final functionName = '_setUp$pascalName';
   if (!content.contains('Future<void> $functionName')) {
+    final controllerRegistration = includeController
+        ? '''
+
+    // Controllers
+    sl.registerFactory(() => ${pascalName}Controller(sl()));'''
+        : '';
     final setupFunction = '''
 
 Future<void> $functionName() async {
@@ -755,8 +774,7 @@ Future<void> $functionName() async {
   // Use Cases
   sl.registerLazySingleton(() => ${pascalName}UseCase(repository: sl()));
 
-  // Controllers
-  sl.registerFactory(() => ${pascalName}Controller(sl()));
+$controllerRegistration
 }
 ''';
     content = '${content.trimRight()}\n$setupFunction';
