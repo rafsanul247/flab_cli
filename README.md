@@ -238,13 +238,13 @@ flab auth --clean
 ```bash
 flab profile --mvvm
 ```
-Generates `models/`, `viewmodels/`, and `views/`.
+The CLI asks you to choose Provider, Riverpod, GetX, or Bloc, installs the matching package, and generates `models/`, `viewmodels/`, `views/`, and a state-management starter file.
 
 #### MVC Architecture
 ```bash
 flab dashboard --mvc
 ```
-Generates `models/`, `controllers/`, and `views/` with starter MVC model and controller classes.
+The CLI asks you to choose Provider, Riverpod, GetX, or Bloc, installs the matching package, and generates `models/`, `controllers/`, `views/`, and a state-management starter file with starter MVC model and controller classes.
 
 #### Granular Component Generation
 Generate specific components directly inside a feature:

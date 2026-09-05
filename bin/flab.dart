@@ -301,6 +301,12 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
     path.join('lib', 'features', snakeName, 'presentation', 'views', 'widgets'),
   ).createSync(recursive: true);
 
+  final shouldChooseStateManagement =
+      flags['clean'] as bool || flags['mvvm'] as bool || flags['mvc'] as bool;
+  final stateManagement = shouldChooseStateManagement
+      ? _chooseStateManagement()
+      : 'getx';
+
   if (arch == 'Clean Architecture') {
     // 1. Data Layer
     _createFile(
@@ -336,15 +342,6 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
       Templates.getControllerContent(pascalName, snakeName),
     );
 
-    final stateManagement = flags['clean'] as bool
-        ? _chooseStateManagement()
-        : 'getx';
-    await _installStateManagementDependency(stateManagement);
-    _createFile(
-      path.join('lib', 'features', snakeName, 'presentation', 'state', '${snakeName}_$stateManagement.dart'),
-      Templates.getStateManagementContent(pascalName, snakeName, stateManagement),
-    );
-
     // 4. Dependency Injection
     _addFeatureToInjection(snakeName, pascalName);
   } else if (arch == 'MVVM') {
@@ -360,6 +357,12 @@ Future<void> _handleFeatureCreation(String featureName, ArgResults flags) async 
       Templates.getMvcModelContent(pascalName),
     );
   }
+
+  await _installStateManagementDependency(stateManagement);
+  _createFile(
+    path.join('lib', 'features', snakeName, 'presentation', 'state', '${snakeName}_$stateManagement.dart'),
+    Templates.getStateManagementContent(pascalName, snakeName, stateManagement),
+  );
 
   _logger.success('⚡ Feature "$featureName" generated successfully with $arch!');
 }
@@ -847,7 +850,8 @@ void _printHelp() {
 │  ⚡ flab init <appName>           │  # Initialize Flutter project      │
 │  ⚡ flab <Feature>                │  # Clean Architecture + GetX       │
 │  ⚡ flab <Feature> --clean        │  # Choose state management          │
-│  ⚡ flab <Feature> --mvvm         │  # Scaffold MVVM Architecture      │
+│  ⚡ flab <Feature> --mvvm         │  # MVVM + choose state management   │
+│  ⚡ flab <Feature> --mvc          │  # MVC + choose state management    │
 │  ⚡ flab <Feature> -u <UseCase>   │  # Inject custom UseCase           │
 │  ⚡ flab list                     │  # List all created features       │
 │  ⚡ flab rm <Feature>             │  # Safe remove feature             │
