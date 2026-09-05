@@ -1275,6 +1275,12 @@ class ${pascalName}DataSourceImplement implements ${pascalName}DataSource {
 }
 ''';
 
+  static String getEntityContent(String pascalName) => '''
+class ${pascalName}Entity {
+  const ${pascalName}Entity();
+}
+''';
+
   static String getModelContent(String pascalName) => '''
 class ${pascalName}Model {
   const ${pascalName}Model();

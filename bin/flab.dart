@@ -249,15 +249,18 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
   }
 
   if (flags['model'] != null) {
+    final modelRaw = flags['model'] as String;
+    final modelSnake = modelRaw.toLowerCase();
+    final modelPascal = _toPascalCase(modelSnake);
     _createFile(
-      path.join('lib', 'features', snakeName, 'data', 'models', '${flags['model']}_model.dart'),
-      '// Model: ${flags['model']}',
+      path.join('lib', 'features', snakeName, 'data', 'models', '${modelSnake}_model.dart'),
+      Templates.getModelContent(modelPascal),
     );
     _createFile(
-      path.join('lib', 'features', snakeName, 'domain', 'entities', '${flags['model']}_entity.dart'),
-      '// Entity: ${flags['model']}',
+      path.join('lib', 'features', snakeName, 'domain', 'entities', '${modelSnake}_entity.dart'),
+      Templates.getEntityContent(modelPascal),
     );
-    _logger.success('Model & Entity "${flags['model']}" generated under $featureName');
+    _logger.success('Model & Entity "$modelRaw" generated under $featureName');
     return;
   }
 
@@ -271,6 +274,9 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
     path.join('lib', 'features', snakeName, 'presentation', 'views', '${snakeName}_screen.dart'),
     Templates.getScreenContent(pascalName),
   );
+  Directory(
+    path.join('lib', 'features', snakeName, 'presentation', 'views', 'widgets'),
+  ).createSync(recursive: true);
 
   if (arch == 'Clean Architecture') {
     // 1. Data Layer
@@ -288,6 +294,10 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
     );
 
     // 2. Domain Layer
+    _createFile(
+      path.join('lib', 'features', snakeName, 'domain', 'entities', '${snakeName}_entity.dart'),
+      Templates.getEntityContent(pascalName),
+    );
     _createFile(
       path.join('lib', 'features', snakeName, 'domain', 'repositories', '${snakeName}_repository.dart'),
       Templates.getRepoContent(pascalName),

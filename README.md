@@ -185,16 +185,18 @@ lib/features/<feature_name>/
 │   └── repositories/
 │       └── <feature_name>_repository_implement.dart # Concrete repository implementation
 ├── domain/
-│   ├── entities/                                   # Domain entities (if generated with -m)
+│   ├── entities/
+│   │   └── <feature_name>_entity.dart              # Core business entity
 │   ├── repositories/
-│   │   └── <feature_name>_repository.dart           # Abstract repository interface
+│   │   └── <feature_name>_repository.dart          # Abstract repository interface
 │   └── usecases/
-│       └── <feature_name>_usecase.dart              # Business logic use cases
+│       └── <feature_name>_usecase.dart             # Business logic use cases
 └── presentation/
     ├── manager/
     │   └── controller/
     │       └── <feature_name>_controller.dart      # Feature controller/state holder
     └── views/
+        ├── widgets/                                # Feature-specific widgets
         └── <feature_name>_screen.dart              # UI view screen
 ```
 
