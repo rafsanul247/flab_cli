@@ -1262,18 +1262,41 @@ void main() async {
   // 📦 FEATURE SCAFFOLDING TEMPLATES
   // =========================================================================
 
-  static String getDataSourceContent(String pascalName) => '''
+  static String getDataSourceContent(String pascalName, [String? snakeName]) {
+    final modelSnake = snakeName ?? pascalName.toLowerCase();
+    return '''
 import 'package:dio/dio.dart';
+import '../models/${modelSnake}_model.dart';
 
 abstract class ${pascalName}DataSource {
+  // TODO: Define Data Source methods here
+  // Future<List<${pascalName}Model>> getUsers();
 }
 
 class ${pascalName}DataSourceImplement implements ${pascalName}DataSource {
   final Dio dio;
 
   ${pascalName}DataSourceImplement({required this.dio});
+
+  // TODO: Implement Data Source methods
+  // @override
+  // Future<List<${pascalName}Model>> getUsers() async {
+  //   final response = await dio.get('http://localhost:3000/users');
+  //
+  //   if (response.statusCode == 200) {
+  //     final List<dynamic> data = response.data;
+  //     return data.map((json) => ${pascalName}Model.fromJson(json as Map<String, dynamic>)).toList();
+  //   } else {
+  //     throw DioException(
+  //       requestOptions: response.requestOptions,
+  //       response: response,
+  //       type: DioExceptionType.badResponse,
+  //     );
+  //   }
+  // }
 }
 ''';
+  }
 
   static String getEntityContent(String pascalName) => '''
 class ${pascalName}Entity {
@@ -1281,21 +1304,66 @@ class ${pascalName}Entity {
 }
 ''';
 
-  static String getModelContent(String pascalName) => '''
-class ${pascalName}Model {
-  const ${pascalName}Model();
+  static String getModelContent(String pascalName, [String? snakeName]) {
+    final entitySnake = snakeName ?? pascalName.toLowerCase();
+    return '''
+import '../../domain/entities/${entitySnake}_entity.dart';
 
-  factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
-    return const ${pascalName}Model();
+class ${pascalName}Model extends ${pascalName}Entity {
+  const ${pascalName}Model(
+    // TODO: Pass entity properties to super constructor
+    // {
+    //   required super.id,
+    //   required super.title,
+    // }
+  );
+
+  // TODO: Convert JSON to Model
+  // factory ${pascalName}Model.fromJson(Map<String, dynamic> json) {
+  //   return ${pascalName}Model(
+  //     id: json['id'] as String?,
+  //     title: json['title'] as String?,
+  //   );
+  // }
+
+  // TODO: Convert Model to JSON
+  // Map<String, dynamic> toJson() {
+  //   return {
+  //     'id': id,
+  //     'title': title,
+  //   };
+  // }
+}
+''';
   }
 
-  Map<String, dynamic> toJson() {
-    return {};
-  }
+  // ========================================================
+  //                      Error & Failures
+  // ========================================================
+  static const String failuresContent = '''
+abstract class Failure {
+  final String message;
+  const Failure(this.message);
+}
+
+class ServerFailure extends Failure {
+  const ServerFailure([super.message = 'Server failure occurred']);
+}
+
+class CacheFailure extends Failure {
+  const CacheFailure([super.message = 'Cache failure occurred']);
+}
+
+class NetworkFailure extends Failure {
+  const NetworkFailure([super.message = 'Network connection failure']);
 }
 ''';
 
   static String getRepoImplContent(String pascalName, String snakeName) => '''
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+import '../../../../core/error/failures.dart';
+import '../../domain/entities/${snakeName}_entity.dart';
 import '../../domain/repositories/${snakeName}_repository.dart';
 import '../data_sources/${snakeName}_data_source.dart';
 
@@ -1303,6 +1371,19 @@ class ${pascalName}RepositoryImplement implements ${pascalName}Repository {
   final ${pascalName}DataSource dataSource;
 
   ${pascalName}RepositoryImplement({required this.dataSource});
+
+  // TODO: Implement Repository methods
+  // @override
+  // Future<Either<Failure, List<${pascalName}Entity>>> getUsers() async {
+  //   try {
+  //     final result = await dataSource.getUsers();
+  //     return right(result);
+  //   } on DioException catch (e) {
+  //     return left(ServerFailure(e.message ?? 'Server error'));
+  //   } catch (e) {
+  //     return left(ServerFailure('Unexpected error: \${e.toString()}'));
+  //   }
+  // }
 }
 ''';
 

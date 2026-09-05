@@ -254,13 +254,25 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
     final modelPascal = _toPascalCase(modelSnake);
     _createFile(
       path.join('lib', 'features', snakeName, 'data', 'models', '${modelSnake}_model.dart'),
-      Templates.getModelContent(modelPascal),
+      Templates.getModelContent(modelPascal, modelSnake),
     );
     _createFile(
       path.join('lib', 'features', snakeName, 'domain', 'entities', '${modelSnake}_entity.dart'),
       Templates.getEntityContent(modelPascal),
     );
     _logger.success('Model & Entity "$modelRaw" generated under $featureName');
+    return;
+  }
+
+  if (flags['datasource'] != null) {
+    final dsRaw = flags['datasource'] as String;
+    final dsSnake = dsRaw.toLowerCase();
+    final dsPascal = _toPascalCase(dsSnake);
+    _createFile(
+      path.join('lib', 'features', snakeName, 'data', 'data_sources', '${dsSnake}_data_source.dart'),
+      Templates.getDataSourceContent(dsPascal, snakeName),
+    );
+    _logger.success('DataSource "$dsRaw" generated under $featureName');
     return;
   }
 
@@ -282,11 +294,11 @@ void _handleFeatureCreation(String featureName, ArgResults flags) {
     // 1. Data Layer
     _createFile(
       path.join('lib', 'features', snakeName, 'data', 'data_sources', '${snakeName}_data_source.dart'),
-      Templates.getDataSourceContent(pascalName),
+      Templates.getDataSourceContent(pascalName, snakeName),
     );
     _createFile(
       path.join('lib', 'features', snakeName, 'data', 'models', '${snakeName}_model.dart'),
-      Templates.getModelContent(pascalName),
+      Templates.getModelContent(pascalName, snakeName),
     );
     _createFile(
       path.join('lib', 'features', snakeName, 'data', 'repositories', '${snakeName}_repository_implement.dart'),

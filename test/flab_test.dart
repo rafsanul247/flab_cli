@@ -11,6 +11,27 @@ void main() {
       expect(content, contains('const HomeEntity();'));
     });
 
+    test('Templates.getModelContent generates valid model extending entity', () {
+      final content = Templates.getModelContent('Home', 'home');
+      expect(content, contains("import '../../domain/entities/home_entity.dart';"));
+      expect(content, contains('class HomeModel extends HomeEntity {'));
+      expect(content, contains('const HomeModel('));
+      expect(content, contains('// TODO: Pass entity properties to super constructor'));
+      expect(content, contains('// factory HomeModel.fromJson(Map<String, dynamic> json) {'));
+      expect(content, contains('// Map<String, dynamic> toJson() {'));
+    });
+
+    test('Templates.getDataSourceContent generates valid data source template', () {
+      final content = Templates.getDataSourceContent('Home', 'home');
+      expect(content, contains("import 'package:dio/dio.dart';"));
+      expect(content, contains("import '../models/home_model.dart';"));
+      expect(content, contains('abstract class HomeDataSource {'));
+      expect(content, contains('// TODO: Define Data Source methods here'));
+      expect(content, contains('class HomeDataSourceImplement implements HomeDataSource {'));
+      expect(content, contains('final Dio dio;'));
+      expect(content, contains('// TODO: Implement Data Source methods'));
+    });
+
     test('flab creates entities template and widgets directory', () async {
       final tempDir = await Directory.systemTemp.createTemp('flab_test_');
       try {
@@ -36,6 +57,21 @@ void main() {
         expect(entityFile.existsSync(), isTrue);
         expect(entityFile.readAsStringSync(), contains('class HomeEntity'));
 
+        // Verify data/models/home_model.dart exists and extends entity
+        final modelFile = File(
+          path.join(tempDir.path, 'lib', 'features', 'home', 'data', 'models', 'home_model.dart'),
+        );
+        expect(modelFile.existsSync(), isTrue);
+        expect(modelFile.readAsStringSync(), contains('class HomeModel extends HomeEntity'));
+
+        // Verify data/data_sources/home_data_source.dart exists and has updated template
+        final dataSourceFile = File(
+          path.join(tempDir.path, 'lib', 'features', 'home', 'data', 'data_sources', 'home_data_source.dart'),
+        );
+        expect(dataSourceFile.existsSync(), isTrue);
+        expect(dataSourceFile.readAsStringSync(), contains('class HomeDataSourceImplement implements HomeDataSource'));
+        expect(dataSourceFile.readAsStringSync(), contains("import '../models/home_model.dart';"));
+
         // Verify presentation/views/widgets directory exists
         final widgetsDir = Directory(
           path.join(tempDir.path, 'lib', 'features', 'home', 'presentation', 'views', 'widgets'),
@@ -55,3 +91,4 @@ void main() {
     });
   });
 }
+
